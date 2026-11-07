@@ -1,0 +1,18 @@
+{
+  "name": "cazador-de-objetos-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Backend serverless (Vercel) de Cazador de Objetos: Gemini + Tripo3D sin exponer llaves.",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "vercel dev"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@vercel/node": "^30.0.0",
+    "typescript": "^5.9.3"
+  }
+}
