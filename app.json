@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "Cazador de Objetos",
+    "slug": "cazador-de-objetos",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "cazador",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0A0A0C",
+    "platforms": ["ios", "android"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.cazador.objetos",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Usamos la cámara para escanear objetos reales y convertirlos en criaturas.",
+        "NSMotionUsageDescription": "Usamos el giroscopio para saber cuánto has rodeado el objeto durante el escaneo 360°."
+      }
+    },
+    "android": {
+      "package": "com.cazador.objetos",
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A0C",
+        "foregroundImage": "./assets/images/adaptive-icon.png"
+      },
+      "permissions": ["android.permission.CAMERA"],
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0A0A0C",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 160
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Usamos la cámara para escanear objetos reales y convertirlos en criaturas.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Usamos el giroscopio para saber cuánto has rodeado el objeto durante el escaneo 360°."
+        }
+      ],
+      "expo-image",
+      "expo-sharing",
+      "expo-font",
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
