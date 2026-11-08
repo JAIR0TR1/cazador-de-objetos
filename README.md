@@ -1,158 +1,165 @@
 # Cazador de Objetos
 
-Escanea un objeto real en 360°, deja que la IA lo identifique, genera su modelo 3D y conviértelo en una **criatura coleccionable**.
+Escanea un objeto real en 360°, deja que la IA lo identifique y conviértelo en una **criatura coleccionable** que se guarda en tu cuenta.
 
 Proyecto universitario: Diseño de Interfaces e Ingeniería de Software. Entrega: 8 de noviembre de 2026.
-Funciona en **iPhone y Android con Expo Go**, sin compilar código nativo.
+
+## Instalar y probar
+
+| Teléfono | Cómo | QR |
+|---|---|---|
+| **iPhone** | Instala **Expo Go** desde el App Store. Escanea el QR con la app **Cámara** y toca "Abrir en Expo Go". No hace falta computador. | <img src="docs/qr-expo-go.png" width="160" alt="QR para abrir en Expo Go"> |
+| **Android** | Descarga e instala el **APK** (permite "instalar apps desconocidas" cuando el teléfono lo pida). | <img src="docs/qr-apk.png" width="160" alt="QR para descargar el APK"> |
+
+- Enlace de Expo Go (canal `preview`): `exp://u.expo.dev/814da54f-35b2-4fd9-be5f-40e290e7b679?channel-name=preview`
+- APK: APK_URL
+- Panel del update: https://expo.dev/accounts/jairotr1/projects/cazador-de-objetos/updates/91cea656-c51d-495d-8724-7571de355497
+
+> **Por qué SDK 54:** Expo Go del App Store se quedó en SDK 54 (las versiones 55+ no están en la tienda), así que el proyecto usa SDK 54 para que el iPhone funcione sin compilar nada. En Android se usa el APK, que no depende de Expo Go. El APK y Expo Go reciben el **mismo update** porque comparten el runtime `exposdk:54.0.0` y el canal `preview`.
 
 ---
 
 ## Qué hace
 
 1. **Onboarding** de 3 pasos. Explica el permiso de cámara antes de pedirlo.
-2. **Inicio** con el botón protagonista "Escanear objeto", la última captura, el progreso de colección y la racha de días.
-3. **Escáner 360°.** El giroscopio (yaw de `DeviceMotion`) llena un anillo de 8 segmentos mientras rodeas el objeto, y en cada segmento nuevo la app toma una foto con haptic y destello. Si el giroscopio no ayuda, puedes tomar las fotos a mano. "Listo" se activa desde 3 fotos.
-4. **Procesando.** La IA analiza las fotos (Gemini) y en paralelo se reconstruye el 3D (Tripo3D). Una nube de puntos se arma con el progreso real. Si el 3D tarda, ves la criatura y el modelo termina de cargar en segundo plano.
-5. **Revelación.** Un destello del color de la rareza con haptics, la tarjeta de la criatura y un visor 3D del objeto (rotar, pinch zoom, auto-rotación). Sin 3D, se muestra un visor 360° con tus fotos y una nube de puntos.
-6. **Colección** offline con filtros (rareza, tipo), búsqueda y orden. El detalle muestra el visor 3D o 360°, permite exportar el `.glb` y eliminar la criatura.
-7. **Perfil** con estadísticas, logros y ajustes (reducir animaciones, haptics, borrar datos, criaturas demo).
-8. **Modo demo.** Sin conexión o sin backend, la app usa 3 criaturas de ejemplo y un `.glb` incluido en `assets/`, etiquetados como **DEMO**.
+2. **Bienvenida**: "Crear cuenta", "Iniciar sesión" o "Probar sin cuenta". La sesión queda guardada y la próxima vez entra directo.
+3. **Inicio** con el botón protagonista "Escanear objeto", la última captura, el progreso de colección y la racha de días.
+4. **Escáner 360°.** El giroscopio (yaw de `DeviceMotion`) llena un anillo de 8 segmentos mientras rodeas el objeto, y en cada segmento nuevo la app toma una foto con haptic y destello. También hay captura manual. "Listo" se activa desde 3 fotos.
+5. **Procesando.** La IA analiza las fotos (Gemini) y, si hay llave de Tripo3D, se reconstruye el 3D en paralelo.
+6. **Revelación.** Destello del color de la rareza con haptics, tarjeta de la criatura y visor 3D o 360° de fotos.
+7. **Guardar.** Se guarda primero en el teléfono (al instante) y luego se suben fotos y ficha a Supabase. Sin conexión queda **pendiente** y se sincroniza sola al volver la red.
+8. **Colección** desde la nube con caché local: filtros, búsqueda, orden, pull-to-refresh, skeleton y error con "Reintentar".
+9. **Perfil** con usuario, total, conteo por rareza y "la más rara" (desde la base de datos), logros, ajustes y "Cerrar sesión".
+10. **Modo invitado y modo demo.** Sin cuenta, todo vive en el teléfono; al crear cuenta se ofrece "Subir mi colección". Sin backend, la app usa criaturas de ejemplo etiquetadas **DEMO**.
 
 ## Arquitectura
 
 ```mermaid
 flowchart LR
-    subgraph App["App móvil (Expo Go)"]
-        CAM["Cámara + giroscopio<br/>expo-camera / expo-sensors"] --> PREP["Compresión<br/>768 px · JPEG 0.7"]
+    subgraph App["App móvil (Expo SDK 54 · Expo Go / APK)"]
+        CAM["Cámara + giroscopio"] --> PREP["Compresión<br/>1024 px · JPEG 0.7"]
         PREP --> API["services/api<br/>timeout + reintentos"]
-        API --> STRAT{{"Model3DProvider<br/>(Strategy)"}}
-        STORE[("AsyncStorage +<br/>expo-file-system")]
-        VIEW["Visor 3D (WebView + model-viewer)<br/>o visor 360° de fotos"]
+        AUTH["features/auth<br/>sesión en AsyncStorage"]
+        STORE[("Caché local por usuario<br/>AsyncStorage + archivos")]
+        SYNC["features/sync<br/>cola pendiente + NetInfo"]
+        STORE <--> SYNC
     end
 
     subgraph Vercel["Backend serverless (./server)"]
         A["POST /api/analyze"]
-        M["POST /api/model3d<br/>GET /api/model3d/[id]"]
+        M["/api/model3d"]
     end
 
-    API -- "3–8 fotos base64" --> A
-    STRAT -- "mejor foto" --> M
-    A -- "JSON con schema" --> GEM["Google Gemini"]
-    M -- "upload + image-to-model" --> TRIPO["Tripo3D API v3"]
-    A -- "objeto + criatura" --> STORE
-    M -- "estado, progreso, glbUrl" --> STORE
-    STORE --> VIEW
+    subgraph Supabase["Supabase (sa-east-1)"]
+        SA["Auth<br/>correo + contraseña"]
+        DB[("Postgres<br/>profiles · creatures<br/>RLS por auth.uid()")]
+        ST[("Storage privado<br/>scans/{uid}/…<br/>URLs firmadas")]
+    end
+
+    API -- "3–8 fotos base64" --> A --> GEM["Google Gemini"]
+    API --> M --> TRIPO["Tripo3D (opcional)"]
+    AUTH <--> SA
+    SYNC -- "fotos (ArrayBuffer)" --> ST
+    SYNC -- "upsert / select / delete" --> DB
 ```
+
+**Seguridad:** la app solo conoce la URL y la anon key de Supabase, que son públicas por diseño. Cada tabla tiene RLS (`user_id = auth.uid()`) y el bucket `scans` es privado, con políticas por carpeta `{auth.uid()}/…`. Las llaves de Gemini y Tripo viven solo en Vercel. La contraseña de la base de datos está solo en `.env.local` (ignorado por git).
 
 ### Estructura
 
 ```
-app/                      Rutas (Expo Router)
-  (tabs)/                 Inicio · Colección · Perfil (+ botón central Escanear)
-  onboarding.tsx  scan.tsx  processing.tsx  result.tsx  creature/[id].tsx
+app/                       Rutas (Expo Router)
+  (tabs)/                  Inicio · Colección · Perfil (+ botón central Escanear)
+  welcome  sign-in  sign-up  forgot-password  import-collection
+  onboarding  scan  processing  result  creature/[id]
 src/
-  components/             UI base: AppText, Button, Chip, Icon, Skeleton, EmptyState, TabBar
+  components/              AppText, Button, TextField, FormScreen, Chip, Icon, Skeleton, EmptyState, TabBar
   features/
-    scanner/              useScanner (hook), HUD (anillo, retícula, línea, puntos), sesión de escaneo
-    creatures/            Tarjeta, badges, stats, visor 3D/360°, nube de puntos, demo, compartir
-    collection/           Store de colección (useCollection), racha
-    profile/              Ajustes, onboarding, logros
+    auth/                  authStore (sesión, invitado), validación de formularios
+    sync/                  cola de sincronización, refresco desde la nube, migración del invitado
+    collection/            store de colección con caché por usuario
+    scanner/ creatures/ profile/
   services/
-    api/                  Cliente HTTP, analyze, model3d/ (TripoProvider, FallbackProvider, ChainProvider)
-    storage/              AsyncStorage (kv), archivos (fotos y .glb), store reactivo mínimo
-    motion/               Yaw "desenrollado" del giroscopio
-  theme/                  Tokens de diseño
-  types/                  Tipos de dominio
-server/                   Proyecto Vercel independiente (funciones TypeScript)
+    supabase/              cliente, errores en español, acceso a creatures/profiles/storage
+    api/                   backend (analyze, model3d con Strategy)
+    storage/  motion/
+supabase/migrations/       Esquema, RLS, trigger de perfiles y bucket "scans"
+scripts/test-supabase.mjs  Prueba de integración (RLS, Storage, re-login, /api/analyze)
+server/                    Proyecto Vercel independiente
 docs/evaluacion-heuristica.md
 ```
 
 **Patrones usados**
 
-- **Strategy/Adapter** en `Model3DProvider`. `TripoProvider` adapta el backend, `FallbackProvider` usa la vista 360° de fotos y `ChainProvider` cae del primero al segundo. Para cambiar de proveedor 3D basta con escribir otra clase.
-- **Store externo + `useSyncExternalStore`** para la colección, los ajustes y la sesión de escaneo, sin dependencias extra. Así el 3D puede terminar en segundo plano y actualizar una criatura ya guardada.
-- **Backend como proxy.** Las llaves solo existen en Vercel, y la app solo conoce `EXPO_PUBLIC_API_URL`.
+- **Strategy/Adapter** en `Model3DProvider` (Tripo → visor 360° de respaldo).
+- **Store externo + `useSyncExternalStore`** para sesión, colección y escaneo.
+- **Guardado optimista + cola** (`syncStatus: local | pending | synced`): la UI nunca espera a la red. La subida es idempotente porque el id local es un UUID que coincide con el de la base de datos.
+- **Backend como proxy** para las llaves de IA.
 
-## Cómo correrlo
+## Modelo de datos (Supabase)
 
-Requisitos: Node 20 o superior, la app **Expo Go** en el teléfono (App Store o Play Store) y una cuenta de Vercel para el backend.
+| Tabla | Columnas principales | RLS |
+|---|---|---|
+| `profiles` | `id` (= `auth.users.id`), `username` (único), `created_at` | leer y actualizar solo el propio. Lo crea un trigger al registrarse con el `username` de la metadata |
+| `creatures` | `id`, `user_id` (default `auth.uid()`), `name`, `object_label`, `rarity`, `type`, `description`, `stats` jsonb, `photo_urls` text[] (rutas en `scans`), `glb_url`, `analysis` jsonb (ficha completa), `is_demo`, `created_at` | select/insert/update/delete solo donde `user_id = auth.uid()` |
+| `storage.objects` (bucket `scans`, privado) | `{uid}/{creature_id}/{n}.jpg` | leer/escribir/borrar solo en la carpeta propia |
+
+`username_available(text)` es una función `security definer` que responde solo true/false, para validar el usuario antes de registrarse sin exponer perfiles ajenos.
+
+## Desarrollo
+
+Requisitos: Node 20+, Expo Go (SDK 54) en el teléfono.
 
 ```bash
 npm install
-cp .env.example .env            # y pon la URL de tu backend en EXPO_PUBLIC_API_URL
+cp .env.example .env     # EXPO_PUBLIC_API_URL, EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY
 npx expo start --tunnel
 ```
 
-### Probar en Expo Go
-
-- **iPhone:** abre la app **Cámara**, escanea el QR que muestra la terminal y toca "Abrir en Expo Go".
-- **Android:** abre **Expo Go**, toca "Scan QR code" y escanea el QR.
-- `--tunnel` funciona aunque el teléfono y la computadora estén en redes distintas. Si están en la misma Wi-Fi, `npx expo start` es más rápido.
-- Acepta los permisos de cámara y movimiento. Rodea el objeto despacio con el teléfono apuntándolo.
-
-## Variables de entorno
-
 | Dónde | Variable | Uso |
 |---|---|---|
-| `.env` (raíz, app) | `EXPO_PUBLIC_API_URL` | URL pública del backend (sin `/` final). No es secreta. |
-| `server/.env.local` y Vercel | `GEMINI_API_KEY` | Obligatoria para `/api/analyze`. Se obtiene en Google AI Studio. |
-| `server/.env.local` y Vercel | `TRIPO_API_KEY` | Opcional. Sin ella, `/api/model3d` responde `{ fallback: true }`. |
-| Vercel (opcional) | `GEMINI_MODEL` | Modelo Gemini (por defecto `gemini-3.6-flash`). |
-| Vercel (opcional) | `TRIPO_MODEL` | Modelo de Tripo (por defecto `P1-20260311`). |
+| `.env` y `eas.json` | `EXPO_PUBLIC_API_URL` | URL del backend en Vercel |
+| `.env` y `eas.json` | `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Proyecto Supabase (públicas; la seguridad es RLS) |
+| `.env.local` (no se sube) | `SUPABASE_DB_PASSWORD` | Contraseña de Postgres para `supabase db push` |
+| Vercel | `GEMINI_API_KEY`, `TRIPO_API_KEY` (opcional) | Llaves de IA, solo en el servidor |
 
-Las llaves **nunca** van en la app ni en git. `.gitignore` excluye `.env*`, excepto los `.env.example`.
-
-## Despliegue del backend (Vercel)
+### Supabase
 
 ```bash
-cd server
-npm install
-npx vercel --prod                          # la primera vez enlaza o crea el proyecto
-npx vercel env add GEMINI_API_KEY production
-npx vercel env add TRIPO_API_KEY production
-npx vercel --prod                          # redeploy para aplicar las variables
+npx supabase link --project-ref wgsbocrzmbplzppkjcxj
+npx supabase db push --remote          # aplica supabase/migrations
+npx supabase config push               # auth: sin confirmación de correo, contraseña ≥ 8
+node scripts/test-supabase.mjs         # prueba de integración completa
+node scripts/create-demo-account.mjs   # cuenta demo (credenciales en ENTREGA.local.md)
 ```
 
-Endpoints:
-
-| Método | Ruta | Entrada | Salida |
-|---|---|---|---|
-| POST | `/api/analyze` | `{ images: string[] }` (3–8 JPEG/PNG base64) | `{ objeto, categoria, material, colores[], tamanoEstimado, confianza, criatura{…} }` · 422 si no hay objeto claro |
-| POST | `/api/model3d` | `{ image: string }` | `{ taskId }` o `{ fallback: true }` |
-| GET | `/api/model3d/:id` | — | `{ estado: en_cola\|procesando\|listo\|fallido, progreso, glbUrl }` |
-| GET | `/api/health` | — | Qué servicios están configurados (sin revelar llaves) |
-
-Protecciones: rate limit por IP (en memoria, por instancia), validación de tamaño y tipo de imagen (≤ 4 MB en total), timeouts hacia Gemini (45 s) y Tripo (15–20 s), CORS y errores en español.
-
-Prueba rápida:
+### Publicar
 
 ```bash
-curl https://TU-BACKEND.vercel.app/api/health
+npx eas-cli@latest update --branch preview --message "…"      # Expo Go + APK
+npx eas-cli@latest build -p android --profile preview          # APK nuevo (solo si cambia código nativo)
+```
+
+### Verificación
+
+```bash
+npx tsc --noEmit && npx expo lint && npx expo-doctor && npx expo export -p android
 ```
 
 ## Decisiones de diseño
 
-- **Paleta.** Fondo `#0A0A0C` con superficies `#141418` / `#1C1C22` y bordes de 8 % de blanco. El único acento de acción es el **lima `#C6FF3D`** (escáner y CTA), con azul eléctrico `#2F6BFF` como secundario. Rarezas: Común `#9AA0A6`, Rara `#2F6BFF`, Épica `#FFB020` y Legendaria con degradado `#FF5A1F → #E5383B`. No hay morados, para alejarse del look genérico de "app de IA".
-- **Tipografía.** *Bricolage Grotesque* (600–800) en títulos con carácter, *Inter* en texto legible y *JetBrains Mono* en el HUD del escáner, los números y las etiquetas en mayúsculas con tracking, que dan un tono técnico de instrumento.
-- **Sistema.** Espaciado en múltiplos de 8, radios de 12/20/28, botones de 52 pt, áreas táctiles de 44 pt o más, safe areas y tab bar flotante con indicador animado por spring.
-- **Movimiento.** Un efecto protagonista por pantalla (anillos en Inicio, HUD en el escáner, nube de puntos al procesar, destello de rareza al revelar). Solo se animan `transform` y `opacity` con Reanimated, para mantener 60 fps. Se respeta "Reducir movimiento".
-- **Heurísticas de Nielsen.** Evaluadas en [docs/evaluacion-heuristica.md](docs/evaluacion-heuristica.md). Destacan el estado visible en cada paso (H1), la prevención de errores con mínimos y confirmaciones (H5) y los errores humanos con acción, incluido el modo demo (H9).
+- **Paleta.** Fondo `#0A0A0C`, superficies `#141418` / `#1C1C22`, un único acento de acción **lima `#C6FF3D`** y azul `#2F6BFF` como secundario. Rarezas: Común `#9AA0A6`, Rara `#2F6BFF`, Épica `#FFB020`, Legendaria `#FF5A1F → #E5383B`. Sin morados.
+- **Tipografía.** *Bricolage Grotesque* en títulos, *Inter* en texto y *JetBrains Mono* en HUD, números y etiquetas.
+- **Sistema.** Espaciado ×8, radios 12/20/28, botones y campos de 52 pt, áreas táctiles ≥ 44 pt, safe areas.
+- **Formularios.** Etiqueta siempre visible, validación al salir del campo, error en línea con ícono, mostrar/ocultar contraseña, botón con indicador y deshabilitado mientras carga, haptic de éxito o error.
+- **Movimiento.** Un efecto protagonista por pantalla; solo `transform`/`opacity` con Reanimated; respeta "Reducir movimiento".
+- **Heurísticas de Nielsen.** Evaluadas en [docs/evaluacion-heuristica.md](docs/evaluacion-heuristica.md), incluido el flujo de cuentas y sincronización.
 
 ## Limitaciones honestas
 
-- **El 3D no es un escaneo LiDAR.** Lo genera una IA (Tripo3D) a partir de **una** foto, la de más detalle. La forma y la textura son una *interpretación*: las partes que no se ven se inventan. Las fotos de los 8 ángulos sirven para el análisis de Gemini y para el visor 360°.
-- **La reconstrucción tarda** entre 30 s y 2 min y consume créditos de Tripo. Sin `TRIPO_API_KEY`, la app usa el visor 360° de fotos.
-- **El giroscopio mide el giro del teléfono, no la posición.** Si el usuario gira sobre sí mismo sin rodear el objeto, el anillo también se llena. Por eso existen las guías y la captura manual.
-- **El visor 3D** usa `<model-viewer>` en un WebView (no R3F nativo) por su estabilidad en Expo Go. Su script se descarga del CDN la primera vez, así que sin red se usa el visor 360°. `three`, `@react-three/fiber`, `@react-three/drei` y `expo-gl` quedan instalados para migrar a un visor nativo en una *development build*.
-- **El rate limit vive en memoria** por instancia serverless. Para producción haría falta un store compartido (Redis o KV) y autenticación de la app.
-- **Modelo de IA.** `gemini-2.5-flash` está deprecado según la documentación oficial actual de Google, así que el backend usa `gemini-3.6-flash` (estable) y cae a `gemini-2.5-flash` y `gemini-2.5-flash-lite` si el primero no está disponible. Se puede cambiar con `GEMINI_MODEL`.
-- **El aviso de poca luz** solo funciona de forma fiable en iOS, porque depende del EXIF `BrightnessValue`.
-
-## Scripts útiles
-
-```bash
-npx tsc --noEmit                    # typecheck de la app
-(cd server && npx tsc --noEmit)     # typecheck del backend
-npx expo-doctor                     # salud del proyecto Expo
-node scripts/generate-assets.mjs    # regenera ícono, splash y el .glb de demo
-```
+- **El 3D no es LiDAR.** Con `TRIPO_API_KEY` se genera con IA a partir de una foto; sin ella (estado actual) se usa el visor 360° de fotos.
+- **El giroscopio mide el giro del teléfono, no la posición.** Por eso hay guías y captura manual.
+- **Recuperar contraseña** envía el correo de Supabase. El enlace abre la página de Supabase en el navegador; no hay pantalla propia para la nueva contraseña.
+- **URLs firmadas de 7 días.** Sin conexión durante más tiempo, solo se ven las fotos ya cacheadas en el teléfono. Las fotos tomadas en ese teléfono siempre se ven.
+- **Rate limit del backend** en memoria por instancia; en producción haría falta Redis/KV y autenticar la app ante el backend (por ejemplo, con el JWT de Supabase).
+- **El aviso de poca luz** solo es fiable en iOS (EXIF `BrightnessValue`).

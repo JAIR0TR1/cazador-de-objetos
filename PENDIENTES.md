@@ -1,35 +1,32 @@
 # Pendientes
 
-Estado al 7 de noviembre de 2026.
+Estado al 7 de noviembre de 2026 (noche).
 
-## 1. Activar el modelo 3D con IA (Tripo3D): opcional
+## Hecho y verificado
 
-`TRIPO_API_KEY` quedó vacía. Mientras siga así, `/api/model3d` responde `{ fallback: true }` y la app muestra el **visor 360° con las fotos** y una nube de puntos. El análisis con Gemini, las criaturas y la colección funcionan completos.
+- Proyecto en **Expo SDK 54** (el único que abre Expo Go del App Store). `tsc`, `expo lint`, `expo-doctor` (18/18) y `expo export -p android` sin errores.
+- EAS enlazado a `@jairotr1/cazador-de-objetos`, con update publicado en el canal `preview` (runtime `exposdk:54.0.0`) y APK de Android con el perfil `preview`.
+- Supabase `cazador-de-objetos` (sa-east-1): migración aplicada, RLS y bucket privado `scans`, confirmación de correo desactivada.
+- `node scripts/test-supabase.mjs` pasó completo: aislamiento entre usuarios A y B en filas y archivos, A vuelve a entrar y conserva sus datos, `/api/analyze` responde en producción.
+- Cuenta demo con 3 criaturas (Común, Rara y Legendaria). Las credenciales están en `ENTREGA.local.md`.
 
-Para activarlo:
+## 1. Probar en teléfonos reales (antes de presentar)
+
+No se puede automatizar: giroscopio, cámara, haptics, teclado sobre formularios, NetInfo real (modo avión) y el visor 3D en WebView. Sigue la lista "Qué probar" de la entrega.
+
+## 2. Activar el modelo 3D con IA (Tripo3D): opcional
+
+`TRIPO_API_KEY` sigue vacía, así que la app muestra el **visor 360° de fotos**.
 
 ```bash
 cd server
-npx vercel env add TRIPO_API_KEY production   # pega la llave cuando la pida
-npx vercel --prod                             # redeploy para aplicarla
-curl https://cazador-de-objetos-api.vercel.app/api/health   # debe mostrar "tripo": true
+npx vercel env add TRIPO_API_KEY production
+npx vercel --prod
 ```
 
-La llave se obtiene en https://developers.tripo3d.ai, en la sección API Keys. Cada generación consume créditos.
+## 3. Mejoras futuras
 
-## 2. Probar en un teléfono real
-
-La verificación automática pasó: `tsc`, `expo-doctor` y `expo export` (iOS y Android). Además se probaron `/api/analyze` y `/api/model3d` con curl. Lo que **no** se pudo probar sin un dispositivo físico:
-
-- El giroscopio y el llenado del anillo al rodear el objeto.
-- La cámara y la captura automática.
-- Los haptics.
-- El visor 3D en el WebView: con Tripo desactivado, se puede ver con las criaturas demo desde *Perfil → Añadir criaturas demo*.
-
-Antes de presentar, haz un escaneo completo en iPhone y en Android.
-
-## 3. Mejoras futuras (fuera del alcance de la entrega)
-
-- Rate limit compartido (Upstash Redis o Vercel KV) y autenticación de la app ante el backend.
+- Pantalla propia para la nueva contraseña (deep link `cazador://` + `verifyOtp`). Hoy el enlace del correo abre la página de Supabase.
+- Subir los `.glb` de Tripo a Storage (hoy solo se sincronizan las fotos y la ficha).
+- Autenticar las llamadas al backend con el JWT de Supabase y un rate limit compartido (Redis/KV).
 - Visor 3D nativo con `@react-three/fiber` en una *development build*.
-- Enviar a Tripo varias vistas (multiview) para mejorar la reconstrucción.
