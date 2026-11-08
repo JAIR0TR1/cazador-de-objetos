@@ -11,14 +11,18 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://cazador-de-objetos-api.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://cazador-de-objetos-api.vercel.app",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://wgsbocrzmbplzppkjcxj.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indnc2JvY3J6bWJwbHpwcGtqY3hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQwOTI1NzgsImV4cCI6MjEwOTY2ODU3OH0.Pk9KV-6kLXYpjZQ-_lfntj9e4GD6U8W8whwep41sABU"
       }
     },
     "production": {
       "channel": "production",
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://cazador-de-objetos-api.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://cazador-de-objetos-api.vercel.app",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://wgsbocrzmbplzppkjcxj.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indnc2JvY3J6bWJwbHpwcGtqY3hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQwOTI1NzgsImV4cCI6MjEwOTY2ODU3OH0.Pk9KV-6kLXYpjZQ-_lfntj9e4GD6U8W8whwep41sABU"
       }
     }
   },
