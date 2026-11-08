@@ -13,7 +13,7 @@ Proyecto universitario: Diseño de Interfaces e Ingeniería de Software. Entrega
 
 - Enlace de Expo Go (canal `preview`): `exp://u.expo.dev/814da54f-35b2-4fd9-be5f-40e290e7b679?channel-name=preview`
 - APK: APK_URL
-- Panel del update: https://expo.dev/accounts/jairotr1/projects/cazador-de-objetos/updates/91cea656-c51d-495d-8724-7571de355497
+- Panel del update: https://expo.dev/accounts/jairotr1/projects/cazador-de-objetos/updates/61f70e64-f18f-4bda-a059-a867ddde0edc
 
 > **Por qué SDK 54:** Expo Go del App Store se quedó en SDK 54 (las versiones 55+ no están en la tienda), así que el proyecto usa SDK 54 para que el iPhone funcione sin compilar nada. En Android se usa el APK, que no depende de Expo Go. El APK y Expo Go reciben el **mismo update** porque comparten el runtime `exposdk:54.0.0` y el canal `preview`.
 
