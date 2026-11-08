@@ -141,9 +141,10 @@ async function main() {
   } else {
     const health = await fetch(`${API}/api/health`).then((r) => r.json()).catch(() => null);
     ok(!!health, `/api/health responde ${health ? JSON.stringify(health) : ''}`);
-    const img = await fetch('https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/A_small_cup_of_coffee.JPG/640px-A_small_cup_of_coffee.JPG', {
+    const img = await fetch('https://upload.wikimedia.org/wikipedia/commons/4/45/A_small_cup_of_coffee.JPG', {
       headers: { 'User-Agent': 'CazadorDeObjetos-tests/1.0' },
     });
+    ok(img.ok && (img.headers.get('content-type') ?? '').startsWith('image/'), `imagen de ejemplo descargada (HTTP ${img.status})`);
     const b64 = Buffer.from(await img.arrayBuffer()).toString('base64');
     const t0 = Date.now();
     const res = await fetch(`${API}/api/analyze`, {

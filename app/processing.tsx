@@ -95,7 +95,6 @@ export default function Processing() {
       const t = setTimeout(goResult, 1100); // deja ver el paso "Creando criatura"
       return () => clearTimeout(t);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.analysisStatus, modelSettled, waitedLong]);
 
   if (s.analysisStatus === 'error' && s.error) {

@@ -8,12 +8,13 @@ import { AppText } from '@/components/AppText';
 import { EmptyState } from '@/components/EmptyState';
 import { Icon } from '@/components/Icon';
 import { Skeleton } from '@/components/Skeleton';
+import { useAuth } from '@/features/auth/authStore';
 import { useCollection } from '@/features/collection/collectionStore';
 import { CreatureThumb } from '@/features/creatures/CreatureThumb';
 import { useReducedMotionPref } from '@/features/profile/settings';
 import { isApiConfigured } from '@/services/api/client';
 import { haptic } from '@/services/haptics';
-import { colors, fonts, radii, RARITIES, rarityColors, space, TYPES } from '@/theme/tokens';
+import { colors, fonts, radii, RARITIES, rarityColors, space, TYPES, typeColors } from '@/theme/tokens';
 
 function greeting() {
   const h = new Date().getHours();
@@ -72,6 +73,7 @@ function ScanHero() {
 export default function Home() {
   const insets = useSafeAreaInsets();
   const col = useCollection();
+  const { username } = useAuth();
   const typesFound = Object.keys(col.byType).length;
   const total = col.items.length;
 
@@ -79,13 +81,15 @@ export default function Home() {
     <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: insets.top + space.sm, paddingBottom: 140, paddingHorizontal: space.md }}>
       <View style={styles.topRow}>
         <View style={{ flex: 1 }}>
-          <AppText variant="label">{greeting()}</AppText>
+          <AppText variant="label" numberOfLines={1}>
+            {greeting()}{username ? ` · @${username}` : ''}
+          </AppText>
           <AppText variant="title" accessibilityRole="header">
             ¿Qué vas a cazar hoy?
           </AppText>
         </View>
         <View style={styles.streak} accessible accessibilityLabel={`Racha de ${col.streak} días`}>
-          <Icon name="flame" size={18} color={col.streak ? '#FF6B3D' : colors.muted} />
+          <Icon name="flame" size={18} color={col.streak ? typeColors.Fuego : colors.muted} />
           <AppText style={styles.streakText}>{col.streak}</AppText>
         </View>
       </View>

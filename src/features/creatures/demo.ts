@@ -60,6 +60,7 @@ export const DEMO_ANALYSES: AnalysisResult[] = [
   },
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro necesita require() para assets binarios
 export const DEMO_GLB = require('@/assets/models/demo-crystal.glb');
 
 export async function demoGlbUri(): Promise<string | null> {
