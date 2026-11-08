@@ -1,5 +1,4 @@
-import { Redirect } from 'expo-router';
-import { Tabs } from 'expo-router/js-tabs';
+import { Redirect, Tabs } from 'expo-router';
 
 import { TabBar } from '@/components/TabBar';
 import { useOnboarding } from '@/features/profile/onboarding';

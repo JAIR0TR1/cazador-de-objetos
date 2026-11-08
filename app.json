@@ -49,8 +49,6 @@
           "motionPermission": "Usamos el giroscopio para saber cuánto has rodeado el objeto durante el escaneo 360°."
         }
       ],
-      "expo-image",
-      "expo-sharing",
       "expo-font",
       "expo-asset"
     ],

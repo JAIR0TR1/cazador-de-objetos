@@ -94,5 +94,5 @@ export function ModelViewer({ glbUri, autoRotate = true, accent = colors.lime, o
 const styles = StyleSheet.create({
   wrap: { flex: 1, borderRadius: radii.md, overflow: 'hidden' },
   web: { flex: 1, backgroundColor: 'transparent' },
-  center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
 });

@@ -160,12 +160,12 @@ function Scanner() {
 
 const styles = StyleSheet.create({
   black: { flex: 1, backgroundColor: '#000' },
-  vignette: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.18)' },
+  vignette: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.18)' },
   top: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.sm },
   topCenter: { alignItems: 'center' },
   counter: { fontFamily: fonts.monoBold, fontSize: 16, letterSpacing: 1.5, color: colors.text, marginTop: 2 },
   iconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.scrim, alignItems: 'center', justifyContent: 'center' },
-  center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   guide: { marginTop: space.md, backgroundColor: colors.scrim, paddingHorizontal: space.sm, paddingVertical: space.xs, borderRadius: radii.pill, borderWidth: 1, borderColor: colors.border },
   guideText: { fontFamily: fonts.mono, fontSize: 13, color: colors.text, textAlign: 'center' },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space.md, gap: space.sm },

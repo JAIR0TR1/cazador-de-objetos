@@ -99,8 +99,8 @@ export function PhotoSpinViewer({ photos, accent = colors.lime, label }: Props) 
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, borderRadius: radii.md, overflow: 'hidden', backgroundColor: colors.surface },
-  scrim: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10,10,12,0.25)' },
-  cloud: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,10,12,0.25)' },
+  cloud: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   hud: {
     position: 'absolute',
     left: space.sm,

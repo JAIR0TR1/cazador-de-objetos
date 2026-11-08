@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import type { BottomTabBarProps } from 'expo-router/js-tabs';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -22,7 +22,7 @@ const SLOTS: Slot[] = [
 ];
 
 /** Tab bar flotante con indicador animado (spring) y botón de escaneo elevado en lima. */
-export function TabBar({ state, navigateToTab, insets }: BottomTabBarProps) {
+export function TabBar({ state, navigation, insets }: BottomTabBarProps) {
   const reduce = useReducedMotionPref();
   const [width, setWidth] = useState(0);
   const slotW = width / SLOTS.length;
@@ -74,7 +74,7 @@ export function TabBar({ state, navigateToTab, insets }: BottomTabBarProps) {
               onPress={() => {
                 if (!route || focused) return;
                 haptic.tap();
-                navigateToTab(route.key);
+                navigation.navigate(route.name);
               }}
               style={styles.slot}>
               <Icon name={slot.icon} size={22} color={focused ? colors.text : colors.muted} />
