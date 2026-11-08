@@ -47,3 +47,9 @@ example
 !.env.example
 server/.vercel
 .vercel
+
+# Datos privados de la entrega (credenciales demo)
+*.local.md
+# Supabase CLI local
+supabase/.temp
+supabase/.branches

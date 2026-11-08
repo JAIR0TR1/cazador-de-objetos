@@ -16,9 +16,10 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { loadCollection } from '@/features/collection/collectionStore';
+import { initAuth } from '@/features/auth/authStore';
 import { loadOnboarding } from '@/features/profile/onboarding';
 import { loadSettings } from '@/features/profile/settings';
+import { startSyncWatchers } from '@/features/sync/sync';
 import { colors } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -42,7 +43,9 @@ export default function RootLayout() {
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    Promise.all([loadSettings(), loadCollection(), loadOnboarding()]).finally(() => setDataLoaded(true));
+    // Los observadores de sincronización se registran antes de restaurar la sesión.
+    startSyncWatchers();
+    Promise.all([loadSettings(), loadOnboarding(), initAuth()]).finally(() => setDataLoaded(true));
   }, []);
 
   const ready = (fontsLoaded || !!fontError) && dataLoaded;
@@ -60,6 +63,11 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: 'fade_from_bottom' }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="onboarding" options={{ animation: 'fade', gestureEnabled: false }} />
+            <Stack.Screen name="welcome" options={{ animation: 'fade', gestureEnabled: false }} />
+            <Stack.Screen name="sign-in" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="sign-up" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="forgot-password" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="import-collection" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="processing" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="result" options={{ animation: 'fade', gestureEnabled: false }} />

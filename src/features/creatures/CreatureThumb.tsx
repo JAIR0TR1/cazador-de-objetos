@@ -21,7 +21,7 @@ export function CreatureThumb({ creature, onPress, wide }: { creature: Creature;
   return (
     <AP
       accessibilityRole="button"
-      accessibilityLabel={`${c.nombre}, ${c.rareza}, tipo ${c.tipo}${creature.isDemo ? ', demo' : ''}`}
+      accessibilityLabel={`${c.nombre}, ${c.rareza}, tipo ${c.tipo}${creature.isDemo ? ', demo' : ''}${creature.syncStatus === 'pending' ? ', pendiente de sincronizar' : ''}`}
       accessibilityHint="Abre el detalle de la criatura"
       onPress={onPress}
       onPressIn={() => {
@@ -50,6 +50,7 @@ export function CreatureThumb({ creature, onPress, wide }: { creature: Creature;
             {c.rareza}
           </AppText>
           {creature.modelStatus === 'ready' && <Icon name="cube" size={13} color={colors.text} />}
+          {creature.syncStatus === 'pending' && <Icon name="cloud-off" size={13} color={colors.muted} />}
           {creature.isDemo && (
             <AppText style={[styles.tagText, { color: colors.lime }]} maxFontSizeMultiplier={1.2}>
               · DEMO

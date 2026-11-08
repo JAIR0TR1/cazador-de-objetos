@@ -7,6 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Icon } from '@/components/Icon';
+import { useAuth } from '@/features/auth/authStore';
+import { useCollection } from '@/features/collection/collectionStore';
 import { CreatureCard } from '@/features/creatures/CreatureCard';
 import { ObjectViewer } from '@/features/creatures/ObjectViewer';
 import { shareCreature } from '@/features/creatures/share';
@@ -37,6 +40,8 @@ export default function Result() {
   const reduce = useReducedMotionPref();
   const s = useSession();
   const [saving, setSaving] = useState(false);
+  const auth = useAuth();
+  const col = useCollection();
   const analysis = s.analysis;
 
   useEffect(() => {
@@ -52,6 +57,15 @@ export default function Result() {
   const c = analysis.criatura;
   const rc = rarityColors[c.rareza];
   const saved = !!s.savedId;
+  const savedItem = saved ? col.items.find((x) => x.id === s.savedId) : undefined;
+  const cloudNote =
+    !saved || auth.mode !== 'user' || !savedItem
+      ? null
+      : savedItem.syncStatus === 'synced'
+        ? { icon: 'cloud' as const, text: 'Guardada en tu cuenta.' }
+        : savedItem.syncStatus === 'pending'
+          ? { icon: 'cloud-off' as const, text: col.syncing ? 'Subiendo a tu cuenta…' : 'Guardada en el teléfono. Se subirá a tu cuenta al volver la conexión.' }
+          : { icon: 'cloud-off' as const, text: 'Las criaturas demo se guardan solo en este teléfono.' };
 
   const onSave = async () => {
     setSaving(true);
@@ -134,6 +148,14 @@ export default function Result() {
       </ScrollView>
 
       <View style={[styles.actions, { paddingBottom: insets.bottom + space.sm }]}>
+        {cloudNote && (
+          <View style={styles.cloudNote} accessibilityLiveRegion="polite">
+            <Icon name={cloudNote.icon} size={16} color={cloudNote.icon === 'cloud' ? colors.lime : colors.muted} />
+            <AppText variant="small" style={{ flex: 1 }}>
+              {cloudNote.text}
+            </AppText>
+          </View>
+        )}
         <Button label={saved ? 'Guardada en colección' : 'Guardar en colección'} icon={saved ? 'check' : 'grid'} onPress={saved ? () => router.replace('/collection') : onSave} loading={saving} accessibilityHint={saved ? 'Abre tu colección' : undefined} />
         <View style={styles.row}>
           <Button label="Escanear otro" variant="secondary" icon="scan" onPress={scanAnother} style={{ flex: 1 }} />
@@ -165,4 +187,5 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   row: { flexDirection: 'row', gap: space.xs },
+  cloudNote: { flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingHorizontal: 4 },
 });

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
@@ -8,8 +8,10 @@ import { Chip } from '@/components/Chip';
 import { EmptyState } from '@/components/EmptyState';
 import { Icon } from '@/components/Icon';
 import { Skeleton } from '@/components/Skeleton';
+import { useAuth } from '@/features/auth/authStore';
 import { useCollection } from '@/features/collection/collectionStore';
 import { CreatureThumb } from '@/features/creatures/CreatureThumb';
+import { refreshCollection, syncNow } from '@/features/sync/sync';
 import { colors, fonts, radii, RARITIES, rarityColors, space, TYPES, typeColors } from '@/theme/tokens';
 import type { Creature, CreatureType, Rarity } from '@/types';
 
@@ -26,6 +28,9 @@ const power = (c: Creature) => Object.values(c.analysis.criatura.stats).reduce((
 export default function Collection() {
   const insets = useSafeAreaInsets();
   const col = useCollection();
+  const auth = useAuth();
+  const signedIn = auth.mode === 'user';
+  const [pulling, setPulling] = useState(false);
   const [q, setQ] = useState('');
   const [rarity, setRarity] = useState<Rarity | null>(null);
   const [type, setType] = useState<CreatureType | null>(null);
@@ -47,6 +52,17 @@ export default function Collection() {
     return sorted;
   }, [col.items, q, rarity, type, sort]);
 
+  // Al abrir la pestaña se trae la versión más reciente de la nube (la caché ya se muestra).
+  useEffect(() => {
+    if (signedIn) void refreshCollection();
+  }, [signedIn, auth.userId]);
+
+  const onRefresh = async () => {
+    setPulling(true);
+    await (signedIn ? refreshCollection() : syncNow());
+    setPulling(false);
+  };
+
   const filtersOn = !!(q || rarity || type);
   const clear = () => {
     setQ('');
@@ -62,6 +78,29 @@ export default function Collection() {
         </AppText>
         <AppText style={styles.count}>{col.items.length}</AppText>
       </View>
+      {signedIn && col.remote === 'error' && col.items.length > 0 && (
+        <Pressable onPress={onRefresh} accessibilityRole="button" accessibilityHint="Vuelve a intentar cargar desde la nube" style={[styles.status, styles.statusWarn]}>
+          <Icon name="cloud-off" size={16} color={colors.text} />
+          <AppText variant="small" color={colors.text} style={{ flex: 1 }}>
+            {col.remoteError}
+          </AppText>
+          <AppText variant="small" color={colors.lime}>
+            Reintentar
+          </AppText>
+        </Pressable>
+      )}
+      {signedIn && col.pending > 0 && (
+        <View style={styles.status} accessibilityLiveRegion="polite">
+          <Icon name={col.syncing ? 'refresh' : 'cloud-off'} size={16} color={colors.muted} />
+          <AppText variant="small" style={{ flex: 1 }}>
+            {col.syncing
+              ? 'Sincronizando con la nube…'
+              : col.pending === 1
+                ? '1 cambio pendiente de sincronizar. Se subirá al volver la conexión.'
+                : `${col.pending} cambios pendientes de sincronizar. Se subirán al volver la conexión.`}
+          </AppText>
+        </View>
+      )}
       <View style={styles.search}>
         <Icon name="search" size={18} color={colors.muted} />
         <TextInput
@@ -96,14 +135,18 @@ export default function Collection() {
     </View>
   );
 
-  if (!col.loaded) {
+  const firstLoad = !col.loaded || (signedIn && col.remote === 'loading' && col.items.length === 0 && !pulling);
+  if (firstLoad) {
     return (
       <View style={[styles.root, { paddingTop: insets.top + space.sm, paddingHorizontal: space.md, gap: space.sm }]}>
         <Skeleton style={{ height: 36, width: 160 }} />
-        <View style={{ flexDirection: 'row', gap: space.sm }}>
-          <Skeleton style={{ flex: 1, height: 220 }} radius={radii.md} />
-          <Skeleton style={{ flex: 1, height: 220 }} radius={radii.md} />
-        </View>
+        <Skeleton style={{ height: 48 }} />
+        {[0, 1].map((r) => (
+          <View key={r} style={{ flexDirection: 'row', gap: space.sm }}>
+            <Skeleton style={{ flex: 1, height: 220 }} radius={radii.md} />
+            <Skeleton style={{ flex: 1, height: 220 }} radius={radii.md} />
+          </View>
+        ))}
       </View>
     );
   }
@@ -119,13 +162,22 @@ export default function Collection() {
         columnWrapperStyle={{ gap: space.sm }}
         ItemSeparatorComponent={() => <View style={{ height: space.sm }} />}
         keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={pulling} onRefresh={onRefresh} tintColor={colors.lime} colors={[colors.onLime]} progressBackgroundColor={colors.lime} />}
         renderItem={({ item }) => (
           <View style={{ flex: 1, maxWidth: '50%' }}>
             <CreatureThumb creature={item} onPress={() => router.push({ pathname: '/creature/[id]', params: { id: item.id } })} />
           </View>
         )}
         ListEmptyComponent={
-          col.items.length === 0 ? (
+          col.items.length === 0 && signedIn && col.remote === 'error' ? (
+            <EmptyState
+              icon="cloud-off"
+              tone="error"
+              title="No pudimos cargar tu colección"
+              message={col.remoteError ?? 'Revisa tu conexión e intenta de nuevo.'}
+              cta={{ label: 'Reintentar', icon: 'refresh', onPress: onRefresh }}
+            />
+          ) : col.items.length === 0 ? (
             <EmptyState
               icon="grid"
               title="Tu colección está vacía"
@@ -159,4 +211,17 @@ const styles = StyleSheet.create({
   input: { flex: 1, color: colors.text, fontFamily: fonts.body, fontSize: 16, paddingVertical: 10 },
   chips: { gap: space.xs, paddingRight: space.md },
   sortRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  status: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    minHeight: 44,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
+    borderRadius: radii.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statusWarn: { backgroundColor: colors.dangerDim, borderColor: 'rgba(255,90,79,0.3)' },
 });

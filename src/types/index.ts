@@ -44,6 +44,15 @@ export interface Creature {
   modelStatus: ModelStatus;
   modelTaskId?: string | null;
   isDemo?: boolean;
+  /**
+   * Estado de sincronización con Supabase:
+   * - local: solo en este teléfono (invitado o criatura demo)
+   * - pending: guardada en local, falta subirla (sin red o subida en curso)
+   * - synced: existe en la base de datos
+   */
+  syncStatus?: 'local' | 'pending' | 'synced';
+  /** Rutas de las fotos en el bucket privado "scans" ({uid}/{id}/{n}.jpg). */
+  photoPaths?: string[];
 }
 
 export interface Settings {

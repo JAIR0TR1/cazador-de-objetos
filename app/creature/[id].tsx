@@ -6,6 +6,7 @@ import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { Icon } from '@/components/Icon';
+import { useAuth } from '@/features/auth/authStore';
 import { removeCreature, useCollection } from '@/features/collection/collectionStore';
 import { CreatureCard } from '@/features/creatures/CreatureCard';
 import { ObjectViewer } from '@/features/creatures/ObjectViewer';
@@ -30,6 +31,7 @@ export default function CreatureDetail() {
   const insets = useSafeAreaInsets();
   const col = useCollection();
   const session = useSession();
+  const auth = useAuth();
   const creature = col.items.find((c) => c.id === id);
 
   const back = (
@@ -53,7 +55,9 @@ export default function CreatureDetail() {
 
   const confirmDelete = () => {
     haptic.warning();
-    Alert.alert(`¿Eliminar a ${a.criatura.nombre}?`, 'Se borrarán sus fotos y su modelo 3D de este teléfono. No se puede deshacer.', [
+    Alert.alert(`¿Eliminar a ${a.criatura.nombre}?`, auth.mode === 'user' && creature.syncStatus !== 'local'
+        ? 'Se borrará de tu cuenta y de este teléfono, con sus fotos. No se puede deshacer.'
+        : 'Se borrarán sus fotos y su modelo 3D de este teléfono. No se puede deshacer.', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Eliminar',
@@ -97,6 +101,12 @@ export default function CreatureDetail() {
           <InfoRow label="Colores" value={a.colores.join(', ')} />
           <InfoRow label="Confianza IA" value={`${Math.round(a.confianza * 100)}%`} />
           <InfoRow label="Modelo 3D" value={creature.modelStatus === 'ready' ? 'Generado' : creature.modelStatus === 'pending' ? 'Generando…' : 'Vista 360° de fotos'} />
+          {auth.mode === 'user' && (
+            <InfoRow
+              label="Nube"
+              value={creature.syncStatus === 'synced' ? 'Sincronizada' : creature.syncStatus === 'pending' ? 'Pendiente de subir' : 'Solo en este teléfono'}
+            />
+          )}
         </View>
 
         <View style={styles.row}>

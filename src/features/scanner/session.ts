@@ -1,3 +1,5 @@
+import * as Crypto from 'expo-crypto';
+
 import { addCreature, getCreature, updateCreature } from '@/features/collection/collectionStore';
 import { DEMO_ANALYSES, demoGlbUri } from '@/features/creatures/demo';
 import { analyzeImages } from '@/services/api/analyze';
@@ -28,7 +30,8 @@ const POLL_MS = 3000;
 const POLL_MAX_MS = 120000;
 
 const empty = (): ScanSession => ({
-  id: `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
+  // UUID: el mismo id se usa en local y en Supabase (subida idempotente).
+  id: Crypto.randomUUID(),
   photos: [],
   analysisStatus: 'idle',
   analysis: null,

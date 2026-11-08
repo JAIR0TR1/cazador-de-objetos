@@ -9,6 +9,7 @@ import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
 import { PointCloud } from '@/features/creatures/PointCloud';
+import { getAuthMode } from '@/features/auth/authStore';
 import { completeOnboarding } from '@/features/profile/onboarding';
 import { useReducedMotionPref } from '@/features/profile/settings';
 import { colors, radii, rarityColors, space } from '@/theme/tokens';
@@ -91,7 +92,7 @@ export default function Onboarding() {
 
   const finish = () => {
     completeOnboarding();
-    router.replace('/');
+    router.replace(getAuthMode() === 'none' ? '/welcome' : '/');
   };
 
   const next = () => {
@@ -118,7 +119,7 @@ export default function Onboarding() {
           Necesitamos tu cámara
         </AppText>
         <AppText variant="body" color={colors.muted} style={{ marginTop: space.sm }}>
-          La usamos solo mientras escaneas. Las fotos se reducen y se envían a nuestro servidor para que la IA identifique el objeto y genere su modelo 3D. No guardamos tus fotos en la nube: tu colección vive en tu teléfono.
+          La usamos solo mientras escaneas. Las fotos se reducen y se envían a nuestro servidor para que la IA identifique el objeto. Si creas una cuenta, se guardan en privado en la nube; si no, solo en tu teléfono.
         </AppText>
         <AppText variant="small" style={{ marginTop: space.sm }}>
           También usaremos el giroscopio para saber cuánto has rodeado el objeto.
