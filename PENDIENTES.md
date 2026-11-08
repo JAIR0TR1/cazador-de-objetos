@@ -5,7 +5,7 @@ Estado al 7 de noviembre de 2026 (noche).
 ## Hecho y verificado
 
 - Proyecto en **Expo SDK 54** (el único que abre Expo Go del App Store). `tsc`, `expo lint`, `expo-doctor` (18/18) y `expo export -p android` sin errores.
-- EAS enlazado a `@jairotr1/cazador-de-objetos`, con update publicado en el canal `preview` (runtime `exposdk:54.0.0`) y APK de Android con el perfil `preview`.
+- EAS enlazado a `@jairotr1/cazador-de-objetos`. Update vigente en el canal `preview` (grupo `61f70e64`, runtime `exposdk:54.0.0`). APK `2c4fbdf2` (FINISHED, mismo canal y runtime): https://expo.dev/artifacts/eas/0CYn4vdkn08rP9dAhxcUob4zycHfNk_oD6ghTacphIc.apk. QR en `docs/qr-expo-go.png` y `docs/qr-apk.png`.
 - Supabase `cazador-de-objetos` (sa-east-1): migración aplicada, RLS y bucket privado `scans`, confirmación de correo desactivada.
 - `node scripts/test-supabase.mjs` pasó completo: aislamiento entre usuarios A y B en filas y archivos, A vuelve a entrar y conserva sus datos, `/api/analyze` responde en producción.
 - Cuenta demo con 3 criaturas (Común, Rara y Legendaria). Las credenciales están en `ENTREGA.local.md`.
