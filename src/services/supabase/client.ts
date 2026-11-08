@@ -12,6 +12,9 @@ import { AppState } from 'react-native';
 const url = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? '').replace(/\/+$/, '');
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
+/** Clave fija de la sesión en AsyncStorage (para poder leerla sin red al abrir la app). */
+export const AUTH_STORAGE_KEY = 'cazador-auth-session';
+
 export const isSupabaseConfigured = () => /^https:\/\//.test(url) && anonKey.length > 20;
 
 // Si falta la configuración, se crea igual con valores de relleno para no romper imports;
@@ -19,6 +22,7 @@ export const isSupabaseConfigured = () => /^https:\/\//.test(url) && anonKey.len
 export const supabase: SupabaseClient = createClient(url || 'https://sin-configurar.supabase.co', anonKey || 'sin-configurar', {
   auth: {
     storage: AsyncStorage,
+    storageKey: AUTH_STORAGE_KEY,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,

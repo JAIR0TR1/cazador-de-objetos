@@ -3,7 +3,8 @@ import type { Session } from '@supabase/supabase-js';
 import { clearOwnerCache, collectionStore, loadCollection, readCachedItems } from '@/features/collection/collectionStore';
 import { createStore, useStore } from '@/services/storage/createStore';
 import { getJSON, KEYS, setJSON } from '@/services/storage/kv';
-import { isSupabaseConfigured, supabase } from '@/services/supabase/client';
+import { AUTH_STORAGE_KEY, isSupabaseConfigured, supabase } from '@/services/supabase/client';
+import { isNetworkError } from '@/services/supabase/errors';
 
 interface AuthState {
   loaded: boolean;
@@ -60,8 +61,18 @@ export async function initAuth() {
     await applySession(null);
     return;
   }
-  const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
-  await applySession(data.session);
+  let session: Session | null = null;
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    session = data.session;
+    // Sin red y con el token vencido, Supabase no puede refrescarlo y devuelve null.
+    // En ese caso usamos la sesión guardada para mostrar la colección en caché (modo sin conexión);
+    // el SDK la refrescará solo cuando vuelva la conexión.
+    if (!session && error && isNetworkError(error)) session = await getJSON<Session | null>(AUTH_STORAGE_KEY, null);
+  } catch (e) {
+    if (isNetworkError(e)) session = await getJSON<Session | null>(AUTH_STORAGE_KEY, null);
+  }
+  await applySession(session?.user?.id ? session : null);
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'INITIAL_SESSION') return;
     void applySession(session);
