@@ -2,13 +2,17 @@
   "expo": {
     "name": "Cazador de Objetos",
     "slug": "cazador-de-objetos",
+    "owner": "jairotr1",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "cazador",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0A0A0C",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.cazador.objetos",
@@ -23,7 +27,9 @@
         "backgroundColor": "#0A0A0C",
         "foregroundImage": "./assets/images/adaptive-icon.png"
       },
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "plugins": [
@@ -50,11 +56,24 @@
         }
       ],
       "expo-font",
-      "expo-asset"
+      "expo-asset",
+      "expo-updates"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "814da54f-35b2-4fd9-be5f-40e290e7b679"
+      }
+    },
+    "runtimeVersion": "exposdk:54.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/814da54f-35b2-4fd9-be5f-40e290e7b679",
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD"
     }
   }
 }
