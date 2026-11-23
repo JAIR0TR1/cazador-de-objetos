@@ -53,3 +53,6 @@ server/.vercel
 # Supabase CLI local
 supabase/.temp
 supabase/.branches
+
+# Cobertura de Jest
+coverage/

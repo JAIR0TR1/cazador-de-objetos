@@ -41,14 +41,15 @@ export const setOwnerChangedHandler = (fn: (owner: string) => void) => {
   onOwnerChanged = fn;
 };
 
-let currentOwner: string | null = null;
-
-/** Idempotente: solo recarga la colección si cambió el dueño (invitado ↔ usuario). */
+/**
+ * Idempotente: solo recarga la colección si cambió el dueño (invitado ↔ usuario).
+ * Compara con el dueño realmente cargado en el store (no con una copia aparte que pueda desfasarse).
+ */
 async function applySession(session: Session | null) {
   const owner = session?.user.id ?? 'guest';
   authStore.set((s) => ({ ...s, loaded: true, session, guest: session ? false : s.guest }));
-  if (currentOwner === owner && collectionStore.get().loaded) return;
-  currentOwner = owner;
+  const col = collectionStore.get();
+  if (col.loaded && col.owner === owner) return;
   await loadCollection(owner);
   onOwnerChanged(owner);
 }
