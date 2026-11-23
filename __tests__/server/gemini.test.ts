@@ -94,10 +94,43 @@ describe('analyzeWithGemini con respuestas malformadas', () => {
     await expect(analyzeWithGemini(imgs)).rejects.toMatchObject({ status: 503, message: expect.stringMatching(/saturada/) });
   });
 
-  it('modelo inexistente (404) en todos → 502 genérico', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue(gem(404, 'models/x is not found'));
+  it('modelo inexistente (404) en todos y sin alternativas → 502 genérico', async () => {
+    (global.fetch as jest.Mock).mockImplementation(async (url: string) => (String(url).includes('generateContent') ? gem(404, 'models/x is not found') : gem(200, { models: [] })));
     await expect(analyzeWithGemini(imgs)).rejects.toMatchObject({ status: 502 });
-    expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('si los modelos fijos ya no existen, descubre los Flash disponibles y usa uno', async () => {
+    const used: string[] = [];
+    (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
+      const u = String(url);
+      if (u.includes('generateContent')) {
+        used.push(decodeURIComponent(u.split('/models/')[1].split(':')[0]));
+        return used[used.length - 1] === 'gemini-9-flash' ? reply('{"esObjetoClaro":true,"objeto":"Reloj"}') : gem(404, 'not found');
+      }
+      return gem(200, {
+        models: [
+          { name: 'models/gemini-9-flash', supportedGenerationMethods: ['generateContent'] },
+          { name: 'models/gemini-9-flash-image', supportedGenerationMethods: ['generateContent'] },
+          { name: 'models/text-embedding-9', supportedGenerationMethods: ['embedContent'] },
+        ],
+      });
+    });
+    const { analysis, model } = await analyzeWithGemini(imgs);
+    expect(model).toBe('gemini-9-flash');
+    expect(analysis.objeto).toBe('Reloj');
+    expect(used).not.toContain('gemini-9-flash-image');
+  });
+
+  it('un intento que se cuelga se corta y se prueba el siguiente modelo', async () => {
+    let calls = 0;
+    (global.fetch as jest.Mock).mockImplementation(async () => {
+      calls++;
+      if (calls === 1) throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+      return reply('{"esObjetoClaro":true,"objeto":"Vaso"}');
+    });
+    const { analysis } = await analyzeWithGemini(imgs);
+    expect(analysis.objeto).toBe('Vaso');
+    expect(calls).toBe(2);
   });
 
   it('llave inválida (400 API_KEY_INVALID) → error controlado, no un cuelgue', async () => {

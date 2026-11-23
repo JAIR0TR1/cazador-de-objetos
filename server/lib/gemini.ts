@@ -123,10 +123,34 @@ export function normalize(raw: any): Analysis {
   };
 }
 
+const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+/** Cada intento dura poco para que toda la cadena quepa en los 60 s de la función de Vercel. */
+const CALL_TIMEOUT_MS = 18000;
+
 /** Modelos a intentar en orden. gemini-2.5-flash está deprecado (ver README), por eso el default es 3.6 Flash estable. */
 function modelChain(): string[] {
   const list = [process.env.GEMINI_MODEL, 'gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(Boolean) as string[];
   return [...new Set(list)];
+}
+
+/**
+ * Si los nombres fijos se retiran, pregunta a Gemini qué modelos Flash de texto+imagen existen
+ * (más nuevos primero). Nunca lanza: si falla, devuelve [].
+ */
+export async function discoverModels(apiKey: string): Promise<string[]> {
+  try {
+    const res = await fetchWithTimeout(`${API_BASE}/models?pageSize=100`, { headers: { 'x-goog-api-key': apiKey } }, 8000);
+    if (!res.ok) return [];
+    const json = JSON.parse(await res.text()) as { models?: { name?: string; supportedGenerationMethods?: string[] }[] };
+    return (json.models ?? [])
+      .filter((m) => m.supportedGenerationMethods?.includes('generateContent') && /flash/i.test(m.name ?? '') && !/(image|tts|live|audio|embedding|robotics|computer|exp)/i.test(m.name ?? ''))
+      .map((m) => String(m.name).replace(/^models\//, ''))
+      .sort()
+      .reverse()
+      .slice(0, 3);
+  } catch {
+    return [];
+  }
 }
 
 async function callModel(model: string, apiKey: string, images: { data: string; mime: string }[], schemaField: 'responseJsonSchema' | 'responseSchema') {
@@ -144,57 +168,87 @@ async function callModel(model: string, apiKey: string, images: { data: string; 
     },
   };
   return fetchWithTimeout(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+    `${API_BASE}/models/${encodeURIComponent(model)}:generateContent`,
     { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey }, body: JSON.stringify(body) },
-    45000,
+    CALL_TIMEOUT_MS,
   );
+}
+
+/** Un intento con un modelo. Devuelve el análisis, o null (con el motivo en `fail`) para pasar al siguiente. */
+async function tryModel(model: string, apiKey: string, images: { data: string; mime: string }[], fail: (why: string) => void): Promise<Analysis | null> {
+  let res: Response;
+  let text: string;
+  try {
+    res = await callModel(model, apiKey, images, 'responseJsonSchema');
+    text = await res.text();
+    // Compatibilidad: algunos modelos solo aceptan responseSchema (subconjunto OpenAPI).
+    if (res.status === 400 && /responseJsonSchema|Unknown name|schema/i.test(text)) {
+      res = await callModel(model, apiKey, images, 'responseSchema');
+      text = await res.text();
+    }
+  } catch (e) {
+    fail(`${model}: ${(e as Error)?.name === 'AbortError' ? `sin respuesta en ${CALL_TIMEOUT_MS / 1000} s` : String((e as Error)?.message).slice(0, 80)}`);
+    return null;
+  }
+  if (res.status === 429) throw new UpstreamError('La IA está saturada en este momento. Intenta de nuevo en unos segundos.', 503);
+  if (!res.ok) {
+    fail(`${model}: HTTP ${res.status} ${text.slice(0, 160)}`);
+    // Un 4xx distinto de 404/modelo no mejora con otro modelo (p. ej. llave inválida): se sigue por si acaso, sin romper.
+    return null;
+  }
+  let json: any;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    fail(`${model}: respuesta no es JSON`);
+    return null;
+  }
+  const cand = json?.candidates?.[0];
+  if (!cand?.content?.parts) {
+    if (json?.promptFeedback?.blockReason || cand?.finishReason === 'SAFETY') {
+      throw new NotObjectError('No pudimos analizar esas fotos. Intenta con otro objeto.');
+    }
+    fail(`${model}: respuesta vacía`);
+    return null;
+  }
+  const out = cand.content.parts
+    .filter((p: any) => typeof p.text === 'string' && !p.thought)
+    .map((p: any) => p.text)
+    .join('');
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(out.replace(/^```json\s*|```$/g, ''));
+  } catch {
+    fail(`${model}: JSON inválido`);
+    return null;
+  }
+  return normalize(parsed);
 }
 
 export async function analyzeWithGemini(images: { data: string; mime: string }[]): Promise<{ analysis: Analysis; model: string }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new UpstreamError('El servidor no tiene configurada la IA. Usa el modo demo mientras tanto.', 503);
 
-  let lastErr = 'sin respuesta';
-  for (const model of modelChain()) {
-    let res = await callModel(model, apiKey, images, 'responseJsonSchema');
-    let text = await res.text();
-    // Compatibilidad: algunos modelos solo aceptan responseSchema (subconjunto OpenAPI).
-    if (res.status === 400 && /responseJsonSchema|Unknown name|schema/i.test(text)) {
-      res = await callModel(model, apiKey, images, 'responseSchema');
-      text = await res.text();
+  const failures: string[] = [];
+  const fail = (why: string) => failures.push(why);
+  const tried = new Set<string>();
+
+  const attempt = async (models: string[]) => {
+    for (const model of models) {
+      if (tried.has(model)) continue;
+      tried.add(model);
+      const analysis = await tryModel(model, apiKey, images, fail);
+      if (analysis) return { analysis, model };
     }
-    if (res.status === 404 || (res.status === 400 && /model|not found|not supported/i.test(text))) {
-      lastErr = `${model}: ${res.status}`;
-      continue; // probar el siguiente modelo
-    }
-    if (res.status === 429) throw new UpstreamError('La IA está saturada en este momento. Intenta de nuevo en unos segundos.', 503);
-    if (!res.ok) {
-      lastErr = `${model}: ${res.status} ${text.slice(0, 200)}`;
-      if (res.status >= 500) continue;
-      throw new UpstreamError('La IA no pudo procesar las fotos. Intenta con otras tomas.', 502);
-    }
-    const json = JSON.parse(text);
-    const cand = json?.candidates?.[0];
-    if (!cand?.content?.parts) {
-      if (json?.promptFeedback?.blockReason || cand?.finishReason === 'SAFETY') {
-        throw new NotObjectError('No pudimos analizar esas fotos. Intenta con otro objeto.');
-      }
-      lastErr = `${model}: respuesta vacía`;
-      continue;
-    }
-    const out = cand.content.parts
-      .filter((p: any) => typeof p.text === 'string' && !p.thought)
-      .map((p: any) => p.text)
-      .join('');
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(out.replace(/^```json\s*|```$/g, ''));
-    } catch {
-      lastErr = `${model}: JSON inválido`;
-      continue;
-    }
-    return { analysis: normalize(parsed), model };
-  }
-  console.error('[gemini] todos los modelos fallaron:', lastErr);
+    return null;
+  };
+
+  let result = await attempt(modelChain());
+  // Los nombres fijos pueden haberse retirado: se buscan los modelos Flash que existen hoy.
+  if (!result) result = await attempt(await discoverModels(apiKey));
+  if (result) return result;
+
+  // Los logs de Vercel muestran el motivo real de cada fallo (nunca incluye la llave).
+  console.error('[gemini] todos los modelos fallaron:', failures.join(' | '));
   throw new UpstreamError('No pudimos conectar con la IA. Intenta de nuevo en un momento.', 502);
 }
