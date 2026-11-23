@@ -40,6 +40,8 @@ export default function Result() {
   const reduce = useReducedMotionPref();
   const s = useSession();
   const [saving, setSaving] = useState(false);
+  // Alto real de la barra de acciones fija: el scroll deja ese espacio para que nada quede tapado.
+  const [actionsH, setActionsH] = useState(180);
   const auth = useAuth();
   const col = useCollection();
   const analysis = s.analysis;
@@ -89,7 +91,7 @@ export default function Result() {
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + space.sm, paddingBottom: insets.bottom + 180, paddingHorizontal: space.md }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + space.sm, paddingBottom: actionsH + space.md, paddingHorizontal: space.md }}>
         <View style={styles.topRow}>
           <AppText variant="label">¡Capturada!</AppText>
           <Button
@@ -115,7 +117,7 @@ export default function Result() {
         )}
 
         <Animated.View entering={reduce ? undefined : ZoomIn.delay(300).springify().damping(14)}>
-          <AppText style={[styles.rarityTitle, { color: rc.solid }]} maxFontSizeMultiplier={1.2} accessibilityRole="header">
+          <AppText style={[styles.rarityTitle, { color: rc.text }]} maxFontSizeMultiplier={1.2} accessibilityRole="header">
             {c.rareza === 'Legendaria' ? '¡Legendaria!' : c.rareza === 'Épica' ? '¡Épica!' : c.rareza === 'Rara' ? 'Rara' : 'Común'}
           </AppText>
         </Animated.View>
@@ -147,7 +149,7 @@ export default function Result() {
         </View>
       </ScrollView>
 
-      <View style={[styles.actions, { paddingBottom: insets.bottom + space.sm }]}>
+      <View style={[styles.actions, { paddingBottom: insets.bottom + space.sm }]} onLayout={(e) => setActionsH(e.nativeEvent.layout.height)}>
         {cloudNote && (
           <View style={styles.cloudNote} accessibilityLiveRegion="polite">
             <Icon name={cloudNote.icon} size={16} color={cloudNote.icon === 'cloud' ? colors.lime : colors.muted} />

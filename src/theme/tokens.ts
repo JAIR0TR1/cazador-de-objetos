@@ -19,12 +19,20 @@ export const colors = {
   scrim: 'rgba(10,10,12,0.72)',
 } as const;
 
-export const rarityColors: Record<Rarity, { solid: string; gradient: [string, string]; glow: string }> = {
-  Común: { solid: '#9AA0A6', gradient: ['#9AA0A6', '#6F757B'], glow: 'rgba(154,160,166,0.28)' },
-  Rara: { solid: '#2F6BFF', gradient: ['#4C82FF', '#2F6BFF'], glow: 'rgba(47,107,255,0.38)' },
-  Épica: { solid: '#FFB020', gradient: ['#FFC452', '#FFB020'], glow: 'rgba(255,176,32,0.38)' },
-  Legendaria: { solid: '#FF5A1F', gradient: ['#FF5A1F', '#E5383B'], glow: 'rgba(255,90,31,0.45)' },
+/**
+ * - solid: bordes, puntos y barras (elementos no textuales).
+ * - text: color de TEXTO sobre fondo oscuro (≥ 4.5:1 en bg y surface, WCAG AA).
+ * - gradient: fondo de la insignia; su texto va en `onRarity` (oscuro, ≥ 4.5:1 en ambos extremos).
+ */
+export const rarityColors: Record<Rarity, { solid: string; text: string; gradient: [string, string]; glow: string }> = {
+  Común: { solid: '#9AA0A6', text: '#9AA0A6', gradient: ['#9AA0A6', '#868C92'], glow: 'rgba(154,160,166,0.28)' },
+  Rara: { solid: '#2F6BFF', text: '#6E98FF', gradient: ['#6E98FF', '#4A7DFF'], glow: 'rgba(47,107,255,0.38)' },
+  Épica: { solid: '#FFB020', text: '#FFB020', gradient: ['#FFC452', '#FFB020'], glow: 'rgba(255,176,32,0.38)' },
+  Legendaria: { solid: '#FF5A1F', text: '#FF5A1F', gradient: ['#FF5A1F', '#EE4A3E'], glow: 'rgba(255,90,31,0.45)' },
 };
+
+/** Texto sobre las insignias de rareza (contraste ≥ 5:1 con todos los degradados). */
+export const onRarity = '#0A0A0C';
 
 export const RARITIES: Rarity[] = ['Común', 'Rara', 'Épica', 'Legendaria'];
 export const TYPES: CreatureType[] = ['Fuego', 'Agua', 'Tierra', 'Aire', 'Metal', 'Tecno', 'Naturaleza'];

@@ -5,7 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming, Easi
 
 import { AppText } from '@/components/AppText';
 import { useReducedMotionPref } from '@/features/profile/settings';
-import { colors, fonts, radii, rarityColors, space, typeColors } from '@/theme/tokens';
+import { colors, fonts, onRarity, radii, rarityColors, space, typeColors } from '@/theme/tokens';
 import type { CreatureStats, CreatureType, Rarity } from '@/types';
 
 export function RarityBadge({ rarity, small }: { rarity: Rarity; small?: boolean }) {
@@ -17,7 +17,7 @@ export function RarityBadge({ rarity, small }: { rarity: Rarity; small?: boolean
       end={{ x: 1, y: 1 }}
       style={[styles.badge, small && styles.small]}
       accessibilityLabel={`Rareza ${rarity}`}>
-      <AppText maxFontSizeMultiplier={1.2} style={[styles.badgeText, { color: rarity === 'Común' ? colors.bg : '#fff' }]}>
+      <AppText maxFontSizeMultiplier={1.2} style={[styles.badgeText, { color: onRarity }]}>
         {rarity}
       </AppText>
     </LinearGradient>

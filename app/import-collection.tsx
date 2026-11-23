@@ -60,7 +60,7 @@ export default function ImportCollection() {
       <View style={styles.row} accessible accessibilityLabel={RARITIES.map((r) => `${count(r)} ${r}`).join(', ')}>
         {RARITIES.map((r) => (
           <View key={r} style={[styles.cell, { borderColor: rarityColors[r].solid + '55' }]}>
-            <AppText style={[styles.num, { color: rarityColors[r].solid }]}>{count(r)}</AppText>
+            <AppText style={[styles.num, { color: rarityColors[r].text }]}>{count(r)}</AppText>
             <AppText variant="label">{r}</AppText>
           </View>
         ))}

@@ -15,6 +15,7 @@ import { resetOnboarding } from '@/features/profile/onboarding';
 import { updateSettings, useSettings } from '@/features/profile/settings';
 import { API_URL, isApiConfigured } from '@/services/api/client';
 import { haptic } from '@/services/haptics';
+import { isSupabaseConfigured } from '@/services/supabase/client';
 import { fetchProfileStats, type ProfileStats } from '@/services/supabase/creatures';
 import { colors, fonts, radii, RARITIES, rarityColors, space, TYPES, typeColors } from '@/theme/tokens';
 import type { Rarity } from '@/types';
@@ -157,13 +158,17 @@ export default function Profile() {
             <Icon name="cloud-off" size={22} color={colors.muted} />
             <View style={{ flex: 1 }}>
               <AppText variant="bodyStrong">Modo invitado</AppText>
-              <AppText variant="small">Tu colección solo vive en este teléfono. Crea una cuenta para guardarla en la nube.</AppText>
+              <AppText variant="small">
+                {isSupabaseConfigured() ? 'Tu colección solo vive en este teléfono. Crea una cuenta para guardarla en la nube.' : 'Tu colección se guarda en este teléfono.'}
+              </AppText>
             </View>
           </View>
-          <View style={[styles.row, { marginTop: space.sm }]}>
-            <Button label="Crear cuenta" compact style={{ flex: 1 }} onPress={() => router.push('/sign-up')} />
-            <Button label="Iniciar sesión" compact variant="secondary" style={{ flex: 1 }} onPress={() => router.push('/sign-in')} />
-          </View>
+          {isSupabaseConfigured() && (
+            <View style={[styles.row, { marginTop: space.sm }]}>
+              <Button label="Crear cuenta" compact style={{ flex: 1 }} onPress={() => router.push('/sign-up')} />
+              <Button label="Iniciar sesión" compact variant="secondary" style={{ flex: 1 }} onPress={() => router.push('/sign-in')} />
+            </View>
+          )}
         </View>
       )}
 
@@ -208,7 +213,7 @@ export default function Profile() {
               {stats.rarest.name}
             </AppText>
           </View>
-          <AppText variant="label" color={rarityColors[stats.rarest.rarity].solid}>
+          <AppText variant="label" color={rarityColors[stats.rarest.rarity].text}>
             {stats.rarest.rarity}
           </AppText>
         </View>
@@ -221,7 +226,7 @@ export default function Profile() {
         <View style={styles.rarityGrid}>
           {RARITIES.map((r) => (
             <View key={r} style={[styles.rarityCell, { borderColor: rarityColors[r].solid + '55' }]} accessible accessibilityLabel={`${stats.byRarity[r]} ${r}`}>
-              <AppText style={[styles.mid, { color: rarityColors[r].solid }]}>{stats.byRarity[r]}</AppText>
+              <AppText style={[styles.mid, { color: rarityColors[r].text }]}>{stats.byRarity[r]}</AppText>
               <AppText variant="small">{r}</AppText>
             </View>
           ))}

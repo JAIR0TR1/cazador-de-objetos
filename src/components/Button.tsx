@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
+import { useReducedMotionPref } from '@/features/profile/settings';
 import { haptic } from '@/services/haptics';
 import { colors, fonts, radii, sizes, space, springs } from '@/theme/tokens';
 
@@ -27,6 +28,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /** Botón de 52 pt con escala por spring al presionar y haptic ligero. */
 export function Button({ label, onPress, variant = 'primary', icon, loading, disabled, accessibilityHint, style, compact, trailing }: Props) {
+  const reduce = useReducedMotionPref();
   const scale = useSharedValue(1);
   const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const v = variantStyles[variant];
@@ -40,10 +42,10 @@ export function Button({ label, onPress, variant = 'primary', icon, loading, dis
       accessibilityState={{ disabled: !!isDisabled, busy: !!loading }}
       disabled={isDisabled}
       onPressIn={() => {
-        scale.value = withSpring(0.96, springs.snappy);
+        if (!reduce) scale.value = withSpring(0.96, springs.snappy);
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, springs.snappy);
+        if (!reduce) scale.value = withSpring(1, springs.snappy);
       }}
       onPress={() => {
         haptic.light();
@@ -55,7 +57,8 @@ export function Button({ label, onPress, variant = 'primary', icon, loading, dis
       ) : (
         <View style={styles.row}>
           {icon && <Icon name={icon} size={20} color={v.fg} strokeWidth={2} />}
-          <AppText style={[styles.label, { color: v.fg }]} numberOfLines={1}>
+          {/* Hasta 2 líneas: con texto grande del sistema o pantallas de 360 pt la etiqueta no se corta. */}
+          <AppText style={[styles.label, { color: v.fg }]} numberOfLines={2} maxFontSizeMultiplier={1.4}>
             {label}
           </AppText>
           {trailing}
@@ -82,7 +85,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   compact: { minHeight: sizes.touch, paddingHorizontal: space.sm },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  label: { fontFamily: fonts.bodySemi, fontSize: 16 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, maxWidth: '100%' },
+  label: { fontFamily: fonts.bodySemi, fontSize: 16, lineHeight: 20, textAlign: 'center', flexShrink: 1 },
   disabled: { opacity: 0.45 },
 });
