@@ -1,0 +1,75 @@
+{
+  "report": [
+    {
+      "file": "01-onboarding-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "02-onboarding-colecciona-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "03-permiso-camara-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "04-bienvenida-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "05-iniciar-sesion-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "06-iniciar-sesion-errores-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "07-iniciar-sesion-sin-conexion-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "08-crear-cuenta-errores-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "09-inicio-vacio-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "10-coleccion-vacia-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "11-perfil-invitado-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "12-inicio-con-criaturas-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "13-coleccion-demo-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "14-coleccion-filtro-legendaria-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "15-perfil-con-criaturas-360x640.png",
+      "audit": [
+        "TÁCTIL 40x20: \"\""
+      ]
+    },
+    {
+      "file": "16-criatura-detalle-360x640.png",
+      "audit": []
+    },
+    {
+      "file": "17-criatura-detalle-datos-360x640.png",
+      "audit": []
+    }
+  ],
+  "errors": []
+}

@@ -22,7 +22,6 @@ export function Chip({ label, selected, onPress, dot }: Props) {
         haptic.tap();
         onPress();
       }}
-      hitSlop={4}
       style={[styles.chip, selected && styles.selected]}>
       {dot && <View style={[styles.dot, { backgroundColor: dot }]} />}
       <AppText style={[styles.text, selected && styles.textSel]}>{label}</AppText>
@@ -32,7 +31,7 @@ export function Chip({ label, selected, onPress, dot }: Props) {
 
 const styles = StyleSheet.create({
   chip: {
-    minHeight: sizes.touch - 8,
+    minHeight: sizes.touch, // 44 pt reales (hitSlop no aplica en todas las plataformas)
     paddingHorizontal: space.sm,
     borderRadius: radii.pill,
     borderWidth: 1,

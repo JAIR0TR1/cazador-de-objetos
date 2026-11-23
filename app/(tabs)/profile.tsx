@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
@@ -22,25 +22,33 @@ import type { Rarity } from '@/types';
 
 const RANK: Record<Rarity, number> = { Común: 0, Rara: 1, Épica: 2, Legendaria: 3 };
 
+/** Toda la fila (≥ 56 pt) cambia el ajuste; el lector de pantalla la anuncia como interruptor con su estado. */
 function SettingRow({ label, hint, value, onChange }: { label: string; hint: string; value: boolean; onChange: (v: boolean) => void }) {
+  const toggle = (v: boolean) => {
+    haptic.tap();
+    onChange(v);
+  };
   return (
-    <View style={styles.settingRow}>
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityLabel={label}
+      accessibilityHint={hint}
+      accessibilityState={{ checked: value }}
+      onPress={() => toggle(!value)}
+      style={styles.settingRow}>
       <View style={{ flex: 1 }}>
         <AppText variant="bodyStrong">{label}</AppText>
         <AppText variant="small">{hint}</AppText>
       </View>
       <Switch
         value={value}
-        onValueChange={(v) => {
-          haptic.tap();
-          onChange(v);
-        }}
+        onValueChange={toggle}
         trackColor={{ false: colors.surfaceRaised, true: colors.lime }}
         thumbColor={value ? colors.bg : colors.muted}
-        accessibilityLabel={label}
-        accessibilityHint={hint}
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
       />
-    </View>
+    </Pressable>
   );
 }
 

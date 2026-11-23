@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, space } from '@/theme/tokens';
+import { colors, sizes, space } from '@/theme/tokens';
 
 import { AppText } from './AppText';
 import { Icon } from './Icon';
@@ -49,6 +49,20 @@ export function FormScreen({ eyebrow, title, subtitle, children, footer, onBack 
   );
 }
 
+/** Pie "¿No tienes cuenta? Crea una": toda la fila es el área táctil (≥ 44 pt), no solo la palabra. */
+export function FormFooterLink({ question, action, onPress }: { question: string; action: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="link" accessibilityLabel={`${question} ${action}`} onPress={onPress} style={styles.footerLink}>
+      <AppText variant="small" center>
+        {question}{' '}
+        <AppText variant="small" color={colors.lime}>
+          {action}
+        </AppText>
+      </AppText>
+    </Pressable>
+  );
+}
+
 export function FormBanner({ tone, message }: { tone: 'error' | 'success'; message: string }) {
   const c = tone === 'error' ? colors.danger : colors.lime;
   return (
@@ -77,5 +91,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { marginTop: space.lg, gap: space.sm },
+  footerLink: { minHeight: sizes.touch, justifyContent: 'center', alignSelf: 'center', paddingHorizontal: space.sm, marginTop: space.sm },
   banner: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs, padding: space.sm, borderRadius: 12, borderWidth: 1 },
 });

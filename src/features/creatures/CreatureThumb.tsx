@@ -83,7 +83,8 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 0 },
   },
-  wide: { flex: 0 },
+  // Explícito (no `flex: 0`): en web `flex: 0` equivale a flex-basis 0% y la tarjeta se colapsa a 0 de alto.
+  wide: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
   media: { aspectRatio: 1, backgroundColor: colors.surfaceRaised },
   mediaWide: { aspectRatio: 16 / 9 },
   tags: { position: 'absolute', left: space.xs, bottom: space.xs, flexDirection: 'row', alignItems: 'center', gap: 5 },

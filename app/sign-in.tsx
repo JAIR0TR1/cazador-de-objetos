@@ -4,13 +4,13 @@ import { Pressable, StyleSheet, type TextInput } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
-import { FormBanner, FormScreen } from '@/components/FormScreen';
+import { FormBanner, FormFooterLink, FormScreen } from '@/components/FormScreen';
 import { TextField } from '@/components/TextField';
 import { guestItemsToImport, signIn } from '@/features/auth/authStore';
 import { validateEmail, validatePassword } from '@/features/auth/validation';
 import { haptic } from '@/services/haptics';
 import { authErrorMessage } from '@/services/supabase/errors';
-import { colors, sizes, space } from '@/theme/tokens';
+import { colors, sizes } from '@/theme/tokens';
 
 type Field = 'email' | 'password';
 
@@ -55,14 +55,7 @@ export default function SignIn() {
       eyebrow="Hola de nuevo"
       title="Inicia sesión"
       subtitle="Tu colección te espera."
-      footer={
-        <AppText variant="small" center style={{ marginTop: space.md }}>
-          ¿No tienes cuenta?{' '}
-          <AppText variant="small" color={colors.lime} onPress={() => router.replace('/sign-up')} accessibilityRole="link" suppressHighlighting>
-            Crea una
-          </AppText>
-        </AppText>
-      }>
+      footer={<FormFooterLink question="¿No tienes cuenta?" action="Crea una" onPress={() => router.replace('/sign-up')} />}>
       {error && <FormBanner tone="error" message={error} />}
       <TextField
         label="Correo"

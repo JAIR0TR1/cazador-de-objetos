@@ -2,16 +2,15 @@ import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { type TextInput } from 'react-native';
 
-import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
-import { FormBanner, FormScreen } from '@/components/FormScreen';
+import { FormBanner, FormFooterLink, FormScreen } from '@/components/FormScreen';
 import { TextField } from '@/components/TextField';
 import { guestItemsToImport, signUp } from '@/features/auth/authStore';
 import { validateEmail, validatePassword, validateUsername } from '@/features/auth/validation';
 import { haptic } from '@/services/haptics';
 import { isUsernameAvailable } from '@/services/supabase/creatures';
 import { authErrorMessage, isNetworkError } from '@/services/supabase/errors';
-import { colors, space } from '@/theme/tokens';
+import { space } from '@/theme/tokens';
 
 type Field = 'username' | 'email' | 'password';
 
@@ -80,14 +79,7 @@ export default function SignUp() {
       eyebrow="Nueva cuenta"
       title="Crea tu cuenta de cazador"
       subtitle="Así tu colección queda guardada en la nube."
-      footer={
-        <AppText variant="small" center style={{ marginTop: space.md }}>
-          ¿Ya tienes cuenta?{' '}
-          <AppText variant="small" color={colors.lime} onPress={() => router.replace('/sign-in')} accessibilityRole="link" suppressHighlighting>
-            Inicia sesión
-          </AppText>
-        </AppText>
-      }>
+      footer={<FormFooterLink question="¿Ya tienes cuenta?" action="Inicia sesión" onPress={() => router.replace('/sign-in')} />}>
       {banner && <FormBanner tone={banner.tone} message={banner.message} />}
       <TextField
         label="Nombre de usuario"
