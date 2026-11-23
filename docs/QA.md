@@ -25,7 +25,7 @@ Estado al 23 de noviembre de 2026 (segunda ronda de QA: capas 0 a 7). Cada cifra
 | 4 | Flujo 1: onboarding, permiso de cámara, bienvenida | APROBADA | `e2e/01-primera-vez.yaml` |
 | 4 | Flujo 3: validaciones, contraseña incorrecta, "Olvidé mi contraseña" | APROBADA | `e2e/03-iniciar-sesion.yaml` (36 pasos) |
 | 4 | Flujo 2: validaciones de Crear cuenta | APROBADA | `e2e/02-crear-cuenta.yaml` |
-| 4 | Flujo 5: escáner manual, 3 fotos, Listo, procesando | ver sección 0b | `e2e/05-invitado-escaneo.yaml` |
+| 4 | Flujo 5: invitado, escáner manual (foto automática + 2 manuales), "Listo" solo con 3 fotos o más, procesado con error de Gemini → "Usar modo demo", revelación, guardar y verlo en Colección | APROBADA | `e2e/05-invitado-escaneo.yaml` (50 pasos); capturas en `docs/qa-e2e/` |
 | 4 | Flujos 4.4 (crear cuenta con éxito y cerrar sesión), 7, 8, 9 y 10 | **NO EJECUTADOS** | no hubo tiempo; quedan en la lista de pruebas en teléfono |
 | 5 | Escala de fuente 1.3 y 2.0, `uiautomator dump`, TalkBack, animaciones apagadas | **NO EJECUTADA** | queda para la lista manual |
 | 6 | Arranque en frío, memoria y logcat | **NO EJECUTADA** | queda para la lista manual |
@@ -37,6 +37,7 @@ Estado al 23 de noviembre de 2026 (segunda ronda de QA: capas 0 a 7). Cada cifra
 
 Notas honestas:
 - La app se probó en **Expo Go SDK 54 dentro del emulador**, no con el APK: el enlace del APK del README ya no existe (`NoSuchKey`) y hay que generar un build nuevo.
+- El flujo 2 envió el formulario con `qa.e2e@cazadordeobjetos.app` y pudo crear esa cuenta de prueba.
 - Las cuentas temporales de prueba (`qa.*@cazadordeobjetos.app`) quedan en Supabase con sus datos borrados; no se pueden eliminar con la llave pública. Bórralas en Authentication → Users.
 
 ## 1. Verificación automática

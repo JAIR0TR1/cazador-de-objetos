@@ -19,10 +19,11 @@ appId: host.exp.exponent
 - assertNotVisible: "Listo"
 - assertVisible: "Mínimo 3 ángulos"
 - takeScreenshot: 06a-escaner-0-fotos
-- tapOn: "Tomar foto manual"
+# El escáner toma una primera foto automática al abrir la cámara (1/8); cada toque suma una.
 - extendedWaitUntil:
     visible: "(?i)1/8.*"
-    timeout: 10000
+    timeout: 15000
+- assertNotVisible: "Listo"
 - tapOn: "Tomar foto manual"
 - extendedWaitUntil:
     visible: "(?i)2/8.*"
