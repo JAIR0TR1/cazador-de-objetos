@@ -22,7 +22,7 @@ Para presentar Cazador de Objetos 1.0.1 en vivo. Las credenciales de la cuenta d
 | 2:00 | Colección | Tocar **Guardada en colección**, luego el filtro **Legendaria** y quitarlo. | "La colección tiene búsqueda, filtros y orden. Aquí están las de la cuenta demo, guardadas en Supabase con seguridad por usuario." |
 | 2:20 | Detalle | Tocar **Rumbóreo**. | "Cada criatura tiene su ficha: stats, habilidad, historia y el objeto del que nace." |
 | 2:40 | Perfil | Ir a **Perfil**. | "El perfil muestra estadísticas desde la base de datos, logros y ajustes de accesibilidad: reducir movimiento y apagar la vibración." |
-| 2:55 | Cierre | | "Tiene 120 pruebas automáticas y funciona sin internet. Gracias." |
+| 2:55 | Cierre | | "Tiene 154 pruebas automáticas y funciona sin internet. Gracias." |
 
 ## Plan B
 

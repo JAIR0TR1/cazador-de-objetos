@@ -1,6 +1,43 @@
 # QA: Cazador de Objetos 1.0.1
 
-Estado al 23 de noviembre de 2026. Cada cifra sale de un comando ejecutado ese día en la rama `cierre-final`.
+Estado al 23 de noviembre de 2026 (segunda ronda de QA: capas 0 a 7). Cada cifra sale de un comando ejecutado ese día en la rama `cierre-final`.
+
+## 0. Resumen de la ronda de QA por capas
+
+| Capa | Prueba | Resultado | Evidencia |
+|---|---|---|---|
+| 0 | Supabase responde | APROBADA | `/auth/v1/health` 200 tras restaurar el proyecto. La API tardó en recargar su caché de esquema (PGRST205) y se resolvió con `notify pgrst, 'reload schema'` |
+| 0 | Backend Vercel responde | APROBADA | `/api/health` 200 (`gemini: true`, `tripo: false`) |
+| 0 | Emulador Android | APROBADA | AVD `Medium_Phone_API_37.0`, Android 17, 1080×2400, Maestro 2.12.1 |
+| 1 | `tsc`, `expo lint`, `expo-doctor` | APROBADA | sin errores; doctor 18/18 |
+| 1 | `expo export` Android e iOS | APROBADA | bundles Hermes de 5,11 MB cada uno |
+| 1 | Pruebas automáticas ×3 | APROBADA | **154 pruebas en 13 suites**, 3 corridas idénticas |
+| 1 | Respuesta 200 malformada de `/api/analyze` | FALLIDA-CORREGIDA | cerraba la app; ahora error en español con Reintentar y modo demo (`ec8dee7`, 8 pruebas) |
+| 1 | Migración invitado → cuenta, aislamiento A/B, doble toque en Guardar | APROBADA | `migrationAndIsolation.test.ts` (7 pruebas) |
+| 1 | Respuestas malformadas de Gemini, `cleanImage`, rate limit | APROBADA | `__tests__/server/gemini.test.ts` (19 pruebas) |
+| 2 | 13 entradas inválidas en producción (0, 1, 2, 9 y 20 fotos, base64 corrupto, PDF, imagen enorme, 5 MB, `{}`, no JSON, GET) | APROBADA | 400/405/413 con mensajes en español, sin stack ni datos internos (`scripts/test-backend.mjs`) |
+| 2 | `/api/model3d` sin `TRIPO_API_KEY` | APROBADA | responde 200 `{fallback:true}`; la app usa el visor 360° |
+| 2 | Rate limit | APROBADA | 429 en la petición 5 de una ráfaga, `Retry-After` 247 s |
+| 2 | Análisis válido con 3, 5 y 8 fotos reales | **FALLIDA (externa, sin corregir)** | 502 en 2 a 3 s y 504 a los 46 s en todos los intentos. Hacen falta los logs de Vercel (`[gemini] todos los modelos fallaron`) |
+| 3 | `scripts/test-supabase.mjs`, partes 1 a 3 (RLS, Storage, re-login, URLs firmadas, `username_available`) | APROBADA | 3 corridas; B no lee, edita ni borra nada de A, y un cliente sin sesión no ve nada |
+| 3 | Parte 4 del mismo script (`/api/analyze`) | FALLIDA (la misma causa de Gemini) | 504 / 502 |
+| 3 | Cuenta demo | APROBADA | inicia sesión y muestra 3 criaturas (Rumbóreo, Bajofón, Tazaurio) sin modificarlas |
+| 4 | Flujo 1: onboarding, permiso de cámara, bienvenida | APROBADA | `e2e/01-primera-vez.yaml` |
+| 4 | Flujo 3: validaciones, contraseña incorrecta, "Olvidé mi contraseña" | APROBADA | `e2e/03-iniciar-sesion.yaml` (36 pasos) |
+| 4 | Flujo 2: validaciones de Crear cuenta | APROBADA | `e2e/02-crear-cuenta.yaml` |
+| 4 | Flujo 5: escáner manual, 3 fotos, Listo, procesando | ver sección 0b | `e2e/05-invitado-escaneo.yaml` |
+| 4 | Flujos 4.4 (crear cuenta con éxito y cerrar sesión), 7, 8, 9 y 10 | **NO EJECUTADOS** | no hubo tiempo; quedan en la lista de pruebas en teléfono |
+| 5 | Escala de fuente 1.3 y 2.0, `uiautomator dump`, TalkBack, animaciones apagadas | **NO EJECUTADA** | queda para la lista manual |
+| 6 | Arranque en frío, memoria y logcat | **NO EJECUTADA** | queda para la lista manual |
+| 7 | Dependencias nativas frente a Expo Go SDK 54 | APROBADA | 27 de 27 incluidas con la misma versión (`expo/bundledNativeModules.json`) |
+| 7 | `app.json` iOS | APROBADA | bundleIdentifier, permisos de cámara y movimiento en español, `supportsTablet: false` |
+| 7 | Rutas por plataforma | APROBADA | teclado `padding` en iOS, compartir con URL en iOS; cámara denegada abre Ajustes |
+| 7 | Movimiento denegado en iOS | MEJORA PENDIENTE | cae a modo manual y lo explica, pero no ofrece botón a Ajustes |
+| 7 | Capturas a 375×667 y 430×932, `update:view` de iOS | **NO EJECUTADAS** | solo se verificó el export de iOS |
+
+Notas honestas:
+- La app se probó en **Expo Go SDK 54 dentro del emulador**, no con el APK: el enlace del APK del README ya no existe (`NoSuchKey`) y hay que generar un build nuevo.
+- Las cuentas temporales de prueba (`qa.*@cazadordeobjetos.app`) quedan en Supabase con sus datos borrados; no se pueden eliminar con la llave pública. Bórralas en Authentication → Users.
 
 ## 1. Verificación automática
 
@@ -10,8 +47,8 @@ Estado al 23 de noviembre de 2026. Cada cifra sale de un comando ejecutado ese d
 | `npx expo lint` | sin errores ni advertencias |
 | `npx expo-doctor` | 18/18 checks |
 | `npx expo export -p android` | bundle Hermes de 5,11 MB generado |
-| `npm run test:ci` | **120 pruebas en 10 suites, todas en verde** (3 corridas seguidas con el mismo resultado) |
-| `node scripts/test-supabase.mjs` | **no se pudo ejecutar**: el dominio del proyecto Supabase no resuelve en DNS (ver sección 4) |
+| `npm run test:ci` | **154 pruebas en 13 suites, todas en verde** (3 corridas seguidas con el mismo resultado) |
+| `node scripts/test-supabase.mjs` | partes 1 a 3 aprobadas (RLS, Storage, re-login); parte 4 falla por Gemini (ver sección 0) |
 
 ### Pruebas automáticas (jest-expo 54.0.18 + Testing Library 14.1.0)
 
@@ -96,4 +133,32 @@ Marca cada casilla en iPhone (Expo Go) y en Android (APK).
   - `service_role`: solo en comentarios (`.env.example`, `supabase/config.toml`).
 - `/api/analyze` en producción, probado con peticiones inválidas: `GET` → 405; 2 o 9 fotos → 400 "Envía entre 3 y 8 fotos del objeto."; imagen que no es JPEG/PNG → 400; JSON roto → 400. Ninguna respuesta expone datos internos. Además valida el tamaño (máx. 1,2 MB por foto y 4 M caracteres en total) y aplica un límite de 20 peticiones cada 10 min por IP (en memoria por instancia).
 - RLS (revisión estática de `supabase/migrations`): activo en `profiles` y `creatures` con políticas por `auth.uid()`; bucket `scans` con `public = false` y políticas por carpeta `{auth.uid()}/…`.
-- **Pendiente:** la prueba en vivo `node scripts/test-supabase.mjs` falla en el primer paso (`fetch failed`) porque `wgsbocrzmbplzppkjcxj.supabase.co` responde NXDOMAIN en DNS público (Google y Cloudflare), mientras `supabase.com` responde 200. Lo más probable es que el proyecto esté **pausado por inactividad** (plan gratis). Hay que restaurarlo desde el panel de Supabase y volver a ejecutar el script.
+- **Pendiente:** el análisis con Gemini falla en producción (502/504). Revisa los logs de Vercel del proyecto `cazador-de-objetos-api`: busca `[gemini] todos los modelos fallaron:`. Si dice 404 o "not found", los nombres de modelo de `server/lib/gemini.ts` están retirados; si dice "API key", hay que cambiar la llave en las variables de Vercel. Mientras tanto la app ofrece "Usar modo demo".
+
+## 5. Listas para marcar
+
+### Pruebas en Android real
+
+- [ ] Instalar el APK (hay que generar uno nuevo: el enlace del README expiró) o abrir con Expo Go.
+- [ ] Cámara: permiso, escaneo con giroscopio y captura manual.
+- [ ] Vibración en cada ángulo y más intensa en la revelación de una Legendaria.
+- [ ] Crear cuenta con éxito, cerrar y reabrir la app (la sesión se conserva) y cerrar sesión.
+- [ ] Modo avión: guardar queda "pendiente"; al volver la red se sincroniza sola.
+- [ ] Otra cuenta en el mismo teléfono: no se ve nada de la primera.
+- [ ] Botón atrás de Android en cada pantalla y rotación de pantalla.
+- [ ] Doble toque rápido en "Guardar en colección": una sola criatura.
+- [ ] Texto del sistema al máximo y "Quitar animaciones": nada cortado.
+- [ ] TalkBack: bienvenida, inicio, colección y ajustes se anuncian bien.
+- [ ] Cámara denegada: aparece "Abrir Ajustes".
+
+### Pruebas en iPhone real (Expo Go)
+
+- [ ] Abrir `exp://u.expo.dev/814da54f-35b2-4fd9-be5f-40e290e7b679?channel-name=preview` y cerrar por completo y reabrir para recibir el update.
+- [ ] Notch e indicador de inicio: nada tapado en Inicio, Resultado y formularios.
+- [ ] Teclado sobre Crear cuenta e Iniciar sesión (iPhone SE si es posible).
+- [ ] Permiso de cámara y de movimiento; si se niegan, la app lo explica (iOS no vuelve a preguntar).
+- [ ] Giroscopio: el anillo se llena al rodear un objeto.
+- [ ] Vibración (haptics) distinta por rareza.
+- [ ] Gesto de deslizar para volver no rompe el flujo del escáner.
+- [ ] Compartir una criatura (hoja de compartir de iOS).
+- [ ] VoiceOver en bienvenida e inicio y texto grande (Ajustes → Accesibilidad).

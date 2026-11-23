@@ -5,22 +5,23 @@ Estado al 23 de noviembre de 2026 (versión 1.0.1, rama `cierre-final`).
 ## Hecho y verificado
 
 - **Proyecto en Expo SDK 54** (el único que abre Expo Go del App Store). `tsc` sin errores, `expo lint` sin advertencias, `expo-doctor` 18/18, `expo export -p android` correcto.
-- **120 pruebas automáticas en 10 suites** (jest-expo + Testing Library), en verde en 3 corridas seguidas. Ver [docs/QA.md](docs/QA.md).
+- **154 pruebas automáticas en 13 suites** (jest-expo + Testing Library), en verde en 3 corridas seguidas. Ver [docs/QA.md](docs/QA.md).
 - **Verificación visual** en web con Playwright: 34 capturas a 390×844 y 360×640 en [docs/screenshots/](docs/screenshots/), 0 elementos cortados.
 - **8 defectos corregidos** en la revisión final: contraste de insignias y de "Rara", botones que se cortaban con texto grande, animación de botón con "Reducir movimiento", barra fija de Resultado, tarjeta "Última captura" colapsada en web, áreas táctiles de chips, enlaces y ajustes.
 - **Seguridad:** ninguna llave de Gemini en el historial de git; el único JWT del repo es la anon key (pública). `.env*` y `ENTREGA.local.md` ignorados y nunca subidos. `/api/analyze` rechaza entradas inválidas sin exponer datos internos.
 - **Update 1.0.1 publicado** en el canal `preview` (grupo `9eff7857`, runtime `exposdk:54.0.0`). No cambió código nativo: el **APK `2c4fbdf2` sigue vigente** y los QR no cambian.
 - Documentación: [CLAUDE.md](CLAUDE.md), [docs/portafolio.md](docs/portafolio.md), [docs/demo-profesor.md](docs/demo-profesor.md), [docs/QA.md](docs/QA.md).
 
-## 1. Restaurar Supabase (urgente, antes de presentar)
+## 1. Arreglar el análisis con Gemini (urgente, antes de presentar)
 
-El dominio `wgsbocrzmbplzppkjcxj.supabase.co` no resuelve en DNS desde el 23 de noviembre (NXDOMAIN en Google y Cloudflare), mientras `supabase.com` sí responde. Lo más probable es que el proyecto se haya **pausado por inactividad** (plan gratis).
+Supabase ya está restaurado y pasa todas sus pruebas. Lo que falla es `/api/analyze` en producción (502 en 2 s o 504 a los 46 s), así que un escaneo real termina en el error con "Usar modo demo".
 
-1. Entrar al panel de Supabase → proyecto `cazador-de-objetos` → **Restore project**.
-2. Cuando esté activo: `node scripts/test-supabase.mjs` debe terminar sin ✘.
-3. Iniciar sesión con la cuenta demo (credenciales en `ENTREGA.local.md`) y comprobar que aparecen sus 3 criaturas.
+1. En Vercel, proyecto `cazador-de-objetos-api` → **Logs**: busca `[gemini] todos los modelos fallaron:`.
+2. Si dice 404 o "not found": los nombres de modelo de `server/lib/gemini.ts` están retirados; cámbialos y redespliega.
+3. Si dice "API key": genera una llave nueva y cámbiala en las variables de entorno de Vercel.
+4. Comprueba con `node scripts/test-backend.mjs <carpeta-con-jpgs>`.
 
-Mientras tanto, la app sigue funcionando en modo invitado y con criaturas demo (plan B en el guion de la demo).
+Además: el mensaje del rate limit dice "espera un minuto" pero la espera real puede ser de hasta 10 minutos, y el APK del README ya no se puede descargar (hay que generar uno nuevo con `eas build -p android --profile preview`).
 
 ## 2. Probar en teléfonos reales
 

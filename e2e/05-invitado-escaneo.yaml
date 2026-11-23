@@ -1,0 +1,64 @@
+# 5 y 6. Invitado: escáner con captura manual (cámara virtual), "Listo" solo con ≥ 3 fotos,
+# procesado (si el backend falla: error claro + modo demo), revelación, guardar y ver en colección.
+appId: host.exp.exponent
+---
+- runFlow: _invitado.yaml
+- takeScreenshot: 05a-inicio-vacio
+- tapOn: "Escanear objeto"
+- runFlow:
+    when:
+      visible: "Permitir cámara"
+    commands:
+      - tapOn: "Permitir cámara"
+      - tapOn:
+          text: "While using the app|Only this time"
+          optional: true
+- extendedWaitUntil:
+    visible: "Tomar foto manual"
+    timeout: 20000
+- assertNotVisible: "Listo"
+- assertVisible: "Mínimo 3 ángulos"
+- takeScreenshot: 06a-escaner-0-fotos
+- tapOn: "Tomar foto manual"
+- extendedWaitUntil:
+    visible: "(?i)1/8.*"
+    timeout: 10000
+- tapOn: "Tomar foto manual"
+- extendedWaitUntil:
+    visible: "(?i)2/8.*"
+    timeout: 10000
+- assertNotVisible: "Listo"
+- tapOn: "Tomar foto manual"
+- extendedWaitUntil:
+    visible: "(?i)3/8.*"
+    timeout: 10000
+- assertVisible: "Listo"
+- takeScreenshot: 06b-escaner-3-fotos
+- tapOn: "Listo"
+- extendedWaitUntil:
+    visible: "Dando vida a tu objeto|No pudimos analizar el objeto|No logramos ver un objeto claro"
+    timeout: 15000
+- takeScreenshot: 05b-procesando
+- extendedWaitUntil:
+    visible: "No pudimos analizar el objeto|No logramos ver un objeto claro|Guardar en colección"
+    timeout: 180000
+- takeScreenshot: 05c-resultado-o-error
+- runFlow:
+    when:
+      visible: "Usar modo demo"
+    commands:
+      - tapOn: "Usar modo demo"
+- extendedWaitUntil:
+    visible: "Guardar en colección"
+    timeout: 20000
+- takeScreenshot: 05d-revelacion
+- tapOn: "Guardar en colección"
+- extendedWaitUntil:
+    visible: "Guardada en colección"
+    timeout: 10000
+- tapOn: "Guardada en colección"
+- extendedWaitUntil:
+    visible: "Colección"
+    timeout: 10000
+- assertVisible: "1"
+- takeScreenshot: 05e-coleccion-con-captura

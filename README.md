@@ -8,10 +8,10 @@ Proyecto universitario: Diseño de Interfaces e Ingeniería de Software. Versió
 
 | Qué | Resultado (23 nov 2026) |
 |---|---|
-| Pruebas automáticas (`npm run test:ci`) | **120 pruebas en 10 suites, en verde** |
+| Pruebas automáticas (`npm run test:ci`) | **154 pruebas en 13 suites, en verde** |
 | `tsc` · `expo lint` · `expo-doctor` | sin errores · sin advertencias · 18/18 |
 | Verificación visual | 34 capturas (390×844 y 360×640), 0 elementos cortados |
-| Integración Supabase (`scripts/test-supabase.mjs`) | pendiente: el proyecto Supabase no responde (probablemente pausado); hay que restaurarlo |
+| Integración Supabase (`scripts/test-supabase.mjs`) | RLS, Storage y re-login aprobados; el análisis con Gemini falla en producción (ver QA) |
 
 Detalle en [docs/QA.md](docs/QA.md). Ficha del proyecto: [docs/portafolio.md](docs/portafolio.md). Guion de presentación: [docs/demo-profesor.md](docs/demo-profesor.md).
 

@@ -1,0 +1,8 @@
+# Subflujo: bienvenida → "Probar sin cuenta" → Inicio.
+appId: host.exp.exponent
+---
+- runFlow: _bienvenida.yaml
+- tapOn: "Probar sin cuenta"
+- extendedWaitUntil:
+    visible: ".*Qué vas a cazar hoy.*"
+    timeout: 15000

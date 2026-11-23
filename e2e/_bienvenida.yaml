@@ -1,0 +1,7 @@
+# Subflujo: app limpia → salta el onboarding → "Ahora no" al permiso → bienvenida.
+appId: host.exp.exponent
+---
+- runFlow: _abrir.yaml
+- tapOn: "Saltar"
+- tapOn: "Ahora no"
+- assertVisible: "Guarda cada criatura que caces"

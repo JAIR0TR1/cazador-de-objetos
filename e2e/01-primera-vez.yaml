@@ -1,0 +1,24 @@
+# 1. Primera vez: onboarding de 3 pasos → permiso de cámara (aceptar) → bienvenida.
+appId: host.exp.exponent
+---
+- runFlow: _abrir.yaml
+- assertVisible: "Todo objeto esconde una criatura"
+- takeScreenshot: 01a-onboarding-paso1
+- tapOn: "Siguiente"
+- assertVisible: "Rodea el objeto despacio"
+- tapOn: "Siguiente"
+- assertVisible: "Común, Rara, Épica… o Legendaria"
+- tapOn: "Empezar a cazar"
+- assertVisible: "Necesitamos tu cámara"
+- takeScreenshot: 01b-permiso-explicado
+- tapOn: "Permitir cámara"
+- tapOn:
+    text: "While using the app|Mientras la app está en uso|Only this time"
+    optional: true
+- extendedWaitUntil:
+    visible: "Guarda cada criatura que caces"
+    timeout: 15000
+- assertVisible: "Crear cuenta"
+- assertVisible: "Iniciar sesión"
+- assertVisible: "Probar sin cuenta"
+- takeScreenshot: 01c-bienvenida

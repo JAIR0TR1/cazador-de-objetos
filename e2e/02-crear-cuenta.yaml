@@ -1,0 +1,37 @@
+# 2. Crear cuenta: validaciones en línea y envío. El éxito depende de Supabase (si está caído: mensaje sin conexión).
+appId: host.exp.exponent
+---
+- runFlow: _bienvenida.yaml
+- tapOn: "Crear cuenta"
+- assertVisible: "Crea tu cuenta de cazador"
+- tapOn: "Crear cuenta"
+- assertVisible: "Escribe un nombre de usuario."
+- assertVisible: "Escribe tu correo."
+- assertVisible: "Escribe tu contraseña."
+- takeScreenshot: 02a-crear-cuenta-vacio
+- tapOn: "Nombre de usuario"
+- inputText: "jo"
+- tapOn: "Correo"
+- inputText: "correo-sin-arroba"
+- tapOn: "Contraseña"
+- inputText: "123"
+- hideKeyboard
+- assertVisible: "Usa al menos 3 caracteres."
+- assertVisible: "Revisa el correo: falta algo (ej. nombre@correo.com)."
+- assertVisible: "Usa al menos 8 caracteres."
+- takeScreenshot: 02b-crear-cuenta-errores
+- tapOn: "Nombre de usuario"
+- eraseText: 10
+- inputText: "qa_e2e_cazador"
+- tapOn: "Correo"
+- eraseText: 30
+- inputText: "qa.e2e@cazadordeobjetos.app"
+- tapOn: "Contraseña"
+- eraseText: 10
+- inputText: "Prueba-e2e-123"
+- hideKeyboard
+- tapOn: "Crear cuenta"
+- extendedWaitUntil:
+    visible: "No hay conexión. Revisa tu internet e intenta de nuevo.|.*Qué vas a cazar hoy.*"
+    timeout: 30000
+- takeScreenshot: 02c-crear-cuenta-envio

@@ -1,0 +1,27 @@
+# Subflujo: abre la app en Expo Go con datos limpios (AsyncStorage vacío) y cierra el menú de desarrollo.
+# Requiere Metro en el puerto 8081 y `adb reverse tcp:8081 tcp:8081`.
+appId: host.exp.exponent
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: unset
+- openLink: exp://127.0.0.1:8081
+- extendedWaitUntil:
+    visible: "Continue|Todo objeto esconde una criatura|Guarda cada criatura que caces"
+    timeout: 120000
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+- runFlow:
+    when:
+      visible: "Reload"
+    commands:
+      - tapOn:
+          point: "50%,20%"
+- extendedWaitUntil:
+    visible: "Todo objeto esconde una criatura|Guarda cada criatura que caces|.*Qué vas a cazar hoy.*"
+    timeout: 60000
+- waitForAnimationToEnd

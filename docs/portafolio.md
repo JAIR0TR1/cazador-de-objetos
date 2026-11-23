@@ -60,7 +60,7 @@ Estudiantes y jóvenes que usan el teléfono en ratos cortos y con datos limitad
 
 ## Resultados medibles
 
-- **120 pruebas automáticas en 10 suites**, en verde en 3 corridas seguidas, sin depender del azar ni del reloj.
+- **154 pruebas automáticas en 13 suites**, en verde en 3 corridas seguidas, sin depender del azar ni del reloj.
 - Cobertura por líneas de la lógica crítica: validación 100 %, errores 100 %, cliente HTTP 100 %, colección 87,9 %, sesión 86,8 %, sincronización 78,4 %.
 - **34 capturas** (17 pantallas a 390×844 y 360×640) con auditoría automática: 0 elementos cortados.
 - `tsc`, `expo lint` y `expo-doctor` (18/18) sin errores.

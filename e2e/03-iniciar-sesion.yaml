@@ -1,0 +1,30 @@
+# 3. Iniciar sesión: validaciones, "Olvidaste tu contraseña" y envío (depende de Supabase).
+appId: host.exp.exponent
+---
+- runFlow: _bienvenida.yaml
+- tapOn: "Iniciar sesión"
+- assertVisible: "Inicia sesión"
+- tapOn: "Entrar"
+- assertVisible: "Escribe tu correo."
+- assertVisible: "Escribe tu contraseña."
+- tapOn: "Correo"
+- inputText: "qa.e2e@cazadordeobjetos.app"
+- tapOn: "Contraseña"
+- inputText: "contraseña-incorrecta"
+- hideKeyboard
+- tapOn: "Entrar"
+- extendedWaitUntil:
+    visible: "Correo o contraseña incorrectos.|No hay conexión. Revisa tu internet e intenta de nuevo."
+    timeout: 30000
+- takeScreenshot: 03a-iniciar-sesion-error
+- tapOn: "¿Olvidaste tu contraseña?"
+- assertVisible: "Recuperar acceso"
+- tapOn: "Enviar enlace"
+- extendedWaitUntil:
+    visible: "Listo. Si existe una cuenta.*|No hay conexión. Revisa tu internet e intenta de nuevo."
+    timeout: 30000
+- takeScreenshot: 04-olvide-contrasena
+- tapOn: "Volver"
+- assertVisible: "Inicia sesión"
+- tapOn: "¿No tienes cuenta? Crea una"
+- assertVisible: "Crea tu cuenta de cazador"
