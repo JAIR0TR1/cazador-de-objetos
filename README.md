@@ -2,7 +2,25 @@
 
 Escanea un objeto real en 360°, deja que la IA lo identifique y conviértelo en una **criatura coleccionable** que se guarda en tu cuenta.
 
-Proyecto universitario: Diseño de Interfaces e Ingeniería de Software. Entrega: 8 de noviembre de 2026.
+Proyecto universitario: Diseño de Interfaces e Ingeniería de Software. Versión **1.0.1** (cierre: 23 de noviembre de 2026).
+
+## Estado
+
+| Qué | Resultado (23 nov 2026) |
+|---|---|
+| Pruebas automáticas (`npm run test:ci`) | **120 pruebas en 10 suites, en verde** |
+| `tsc` · `expo lint` · `expo-doctor` | sin errores · sin advertencias · 18/18 |
+| Verificación visual | 34 capturas (390×844 y 360×640), 0 elementos cortados |
+| Integración Supabase (`scripts/test-supabase.mjs`) | pendiente: el proyecto Supabase no responde (probablemente pausado); hay que restaurarlo |
+
+Detalle en [docs/QA.md](docs/QA.md). Ficha del proyecto: [docs/portafolio.md](docs/portafolio.md). Guion de presentación: [docs/demo-profesor.md](docs/demo-profesor.md).
+
+<p>
+<img src="docs/screenshots/04-bienvenida-390x844.png" width="180" alt="Bienvenida">
+<img src="docs/screenshots/12-inicio-con-criaturas-390x844.png" width="180" alt="Inicio">
+<img src="docs/screenshots/13-coleccion-demo-390x844.png" width="180" alt="Colección">
+<img src="docs/screenshots/16-criatura-detalle-390x844.png" width="180" alt="Detalle de criatura">
+</p>
 
 ## Instalar y probar
 
@@ -85,8 +103,9 @@ src/
     storage/  motion/
 supabase/migrations/       Esquema, RLS, trigger de perfiles y bucket "scans"
 scripts/test-supabase.mjs  Prueba de integración (RLS, Storage, re-login, /api/analyze)
+__tests__/  jest/          Pruebas automáticas y sus mocks
 server/                    Proyecto Vercel independiente
-docs/evaluacion-heuristica.md
+docs/                      Evaluación heurística, QA, portafolio, guion de demo, capturas y QR
 ```
 
 **Patrones usados**
@@ -143,12 +162,19 @@ npx eas-cli@latest build -p android --profile preview          # APK nuevo (solo
 ### Verificación
 
 ```bash
-npx tsc --noEmit && npx expo lint && npx expo-doctor && npx expo export -p android
+npx tsc --noEmit && npx expo lint && npm run test:ci && npx expo-doctor && npx expo export -p android
+node scripts/test-supabase.mjs   # integración real (necesita red y el proyecto Supabase activo)
 ```
+
+### Pruebas
+
+- `npm test`: pruebas unitarias y de componentes con jest-expo y Testing Library (`__tests__/`, mocks en `jest/`).
+- `npm run test:ci`: igual, en modo CI y con cobertura.
+- `scripts/capturas-web.js`: capturas de verificación visual con Playwright (instrucciones dentro del archivo).
 
 ## Decisiones de diseño
 
-- **Paleta.** Fondo `#0A0A0C`, superficies `#141418` / `#1C1C22`, un único acento de acción **lima `#C6FF3D`** y azul `#2F6BFF` como secundario. Rarezas: Común `#9AA0A6`, Rara `#2F6BFF`, Épica `#FFB020`, Legendaria `#FF5A1F → #E5383B`. Sin morados.
+- **Paleta.** Fondo `#0A0A0C`, superficies `#141418` / `#1C1C22`, un único acento de acción **lima `#C6FF3D`** y azul `#2F6BFF` como secundario. Rarezas: Común `#9AA0A6`, Rara `#2F6BFF`, Épica `#FFB020`, Legendaria `#FF5A1F → #EE4A3E`. El texto sobre las insignias es oscuro y el de "Rara" usa `#6E98FF`: todos los pares de texto pasan WCAG AA (≥ 4.5:1). Sin morados.
 - **Tipografía.** *Bricolage Grotesque* en títulos, *Inter* en texto y *JetBrains Mono* en HUD, números y etiquetas.
 - **Sistema.** Espaciado ×8, radios 12/20/28, botones y campos de 52 pt, áreas táctiles ≥ 44 pt, safe areas.
 - **Formularios.** Etiqueta siempre visible, validación al salir del campo, error en línea con ícono, mostrar/ocultar contraseña, botón con indicador y deshabilitado mientras carga, haptic de éxito o error.
