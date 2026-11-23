@@ -31,7 +31,7 @@ Detalle en [docs/QA.md](docs/QA.md). Ficha del proyecto: [docs/portafolio.md](do
 
 - Enlace de Expo Go (canal `preview`): `exp://u.expo.dev/814da54f-35b2-4fd9-be5f-40e290e7b679?channel-name=preview`
 - APK (build `2c4fbdf2`, canal `preview`; el binario dice 1.0.0 pero descarga solo el update 1.0.1, porque no cambió código nativo): https://expo.dev/artifacts/eas/0CYn4vdkn08rP9dAhxcUob4zycHfNk_oD6ghTacphIc.apk
-- Update vigente **1.0.1** (grupo `9eff7857`, 23 nov 2026): https://expo.dev/accounts/jairotr1/projects/cazador-de-objetos/updates/9eff7857-568a-4750-afc6-a4c0ebe9cd41
+- Update vigente **1.0.1** (grupo `e66cb468`, "1.0.1 QA", 23 nov 2026): https://expo.dev/accounts/jairotr1/projects/cazador-de-objetos/updates/e66cb468-b9fd-412f-9f42-a35efca40077
 
 > **Por qué SDK 54:** Expo Go del App Store se quedó en SDK 54 (las versiones 55+ no están en la tienda), así que el proyecto usa SDK 54 para que el iPhone funcione sin compilar nada. En Android se usa el APK, que no depende de Expo Go. El APK y Expo Go reciben el **mismo update** porque comparten el runtime `exposdk:54.0.0` y el canal `preview`.
 
