@@ -9,6 +9,7 @@ Estado al 23 de noviembre de 2026 (versión 1.0.1, rama `cierre-final`).
 - **Verificación visual** en web con Playwright: 34 capturas a 390×844 y 360×640 en [docs/screenshots/](docs/screenshots/), 0 elementos cortados.
 - **8 defectos corregidos** en la revisión final: contraste de insignias y de "Rara", botones que se cortaban con texto grande, animación de botón con "Reducir movimiento", barra fija de Resultado, tarjeta "Última captura" colapsada en web, áreas táctiles de chips, enlaces y ajustes.
 - **Seguridad:** ninguna llave de Gemini en el historial de git; el único JWT del repo es la anon key (pública). `.env*` y `ENTREGA.local.md` ignorados y nunca subidos. `/api/analyze` rechaza entradas inválidas sin exponer datos internos.
+- **Update 1.0.1 publicado** en el canal `preview` (grupo `9eff7857`, runtime `exposdk:54.0.0`). No cambió código nativo: el **APK `2c4fbdf2` sigue vigente** y los QR no cambian.
 - Documentación: [CLAUDE.md](CLAUDE.md), [docs/portafolio.md](docs/portafolio.md), [docs/demo-profesor.md](docs/demo-profesor.md), [docs/QA.md](docs/QA.md).
 
 ## 1. Restaurar Supabase (urgente, antes de presentar)
