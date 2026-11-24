@@ -18,9 +18,9 @@ Estado al 23 de noviembre de 2026 (segunda ronda de QA: capas 0 a 7). Cada cifra
 | 2 | 13 entradas inválidas en producción (0, 1, 2, 9 y 20 fotos, base64 corrupto, PDF, imagen enorme, 5 MB, `{}`, no JSON, GET) | APROBADA | 400/405/413 con mensajes en español, sin stack ni datos internos (`scripts/test-backend.mjs`) |
 | 2 | `/api/model3d` sin `TRIPO_API_KEY` | APROBADA | responde 200 `{fallback:true}`; la app usa el visor 360° |
 | 2 | Rate limit | APROBADA | 429 en la petición 5 de una ráfaga, `Retry-After` 247 s |
-| 2 | Análisis válido con 3, 5 y 8 fotos reales | **FALLIDA (externa, sin corregir)** | 502 en 2 a 3 s y 504 a los 46 s en todos los intentos. Hacen falta los logs de Vercel (`[gemini] todos los modelos fallaron`) |
+| 2 | Análisis válido con fotos reales | APROBADA (24 nov) | 200 en 8 s con fotos de 960 px y 200 en 14 s con miniaturas. El 23 nov fallaba siempre (502 en 2 s / 504 en 46 s): caída del lado de Google, que se resolvió sola |
 | 3 | `scripts/test-supabase.mjs`, partes 1 a 3 (RLS, Storage, re-login, URLs firmadas, `username_available`) | APROBADA | 3 corridas; B no lee, edita ni borra nada de A, y un cliente sin sesión no ve nada |
-| 3 | Parte 4 del mismo script (`/api/analyze`) | FALLIDA (la misma causa de Gemini) | 504 / 502 |
+| 3 | Parte 4 del mismo script (`/api/analyze`) | FALLIDA-CORREGIDA | el script mandaba la foto de Wikimedia en resolución original (varios MB) y Gemini pasaba de 45 s → 504. Ahora usa 960 px como la app (o `TEST_IMAGE=ruta`) y pasa: 200 en 29,4 s |
 | 3 | Cuenta demo | APROBADA | inicia sesión y muestra 3 criaturas (Rumbóreo, Bajofón, Tazaurio) sin modificarlas |
 | 4 | Flujo 1: onboarding, permiso de cámara, bienvenida | APROBADA | `e2e/01-primera-vez.yaml` |
 | 4 | Flujo 3: validaciones, contraseña incorrecta, "Olvidé mi contraseña" | APROBADA | `e2e/03-iniciar-sesion.yaml` (36 pasos) |
@@ -134,7 +134,7 @@ Marca cada casilla en iPhone (Expo Go) y en Android (APK).
   - `service_role`: solo en comentarios (`.env.example`, `supabase/config.toml`).
 - `/api/analyze` en producción, probado con peticiones inválidas: `GET` → 405; 2 o 9 fotos → 400 "Envía entre 3 y 8 fotos del objeto."; imagen que no es JPEG/PNG → 400; JSON roto → 400. Ninguna respuesta expone datos internos. Además valida el tamaño (máx. 1,2 MB por foto y 4 M caracteres en total) y aplica un límite de 20 peticiones cada 10 min por IP (en memoria por instancia).
 - RLS (revisión estática de `supabase/migrations`): activo en `profiles` y `creatures` con políticas por `auth.uid()`; bucket `scans` con `public = false` y políticas por carpeta `{auth.uid()}/…`.
-- **Pendiente:** el análisis con Gemini falla en producción (502/504). Revisa los logs de Vercel del proyecto `cazador-de-objetos-api`: busca `[gemini] todos los modelos fallaron:`. Si dice 404 o "not found", los nombres de modelo de `server/lib/gemini.ts` están retirados; si dice "API key", hay que cambiar la llave en las variables de Vercel. Mientras tanto la app ofrece "Usar modo demo".
+- El análisis con Gemini funciona (24 nov). Endurecimiento listo en `server/lib/gemini.ts` (descubre modelos Flash vigentes, presupuesto de 52 s y motivo de cada fallo en los logs), **pendiente de desplegar** con `cd server && npx vercel --prod`.
 
 ## 5. Listas para marcar
 

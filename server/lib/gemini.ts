@@ -124,8 +124,14 @@ export function normalize(raw: any): Analysis {
 }
 
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-/** Cada intento dura poco para que toda la cadena quepa en los 60 s de la función de Vercel. */
-const CALL_TIMEOUT_MS = 18000;
+/**
+ * Presupuesto total de la función (Vercel corta a los 60 s). El primer modelo puede usar casi todo
+ * el tiempo (un análisis normal tarda 8–15 s); los siguientes solo usan lo que quede.
+ */
+const TOTAL_BUDGET_MS = 52000;
+const MIN_CALL_MS = 5000;
+let deadline = 0;
+const callTimeout = () => Math.max(MIN_CALL_MS, deadline - Date.now());
 
 /** Modelos a intentar en orden. gemini-2.5-flash está deprecado (ver README), por eso el default es 3.6 Flash estable. */
 function modelChain(): string[] {
@@ -170,7 +176,7 @@ async function callModel(model: string, apiKey: string, images: { data: string; 
   return fetchWithTimeout(
     `${API_BASE}/models/${encodeURIComponent(model)}:generateContent`,
     { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey }, body: JSON.stringify(body) },
-    CALL_TIMEOUT_MS,
+    callTimeout(),
   );
 }
 
@@ -187,7 +193,7 @@ async function tryModel(model: string, apiKey: string, images: { data: string; m
       text = await res.text();
     }
   } catch (e) {
-    fail(`${model}: ${(e as Error)?.name === 'AbortError' ? `sin respuesta en ${CALL_TIMEOUT_MS / 1000} s` : String((e as Error)?.message).slice(0, 80)}`);
+    fail(`${model}: ${(e as Error)?.name === 'AbortError' ? `sin respuesta a tiempo` : String((e as Error)?.message).slice(0, 80)}`);
     return null;
   }
   if (res.status === 429) throw new UpstreamError('La IA está saturada en este momento. Intenta de nuevo en unos segundos.', 503);
@@ -229,6 +235,7 @@ export async function analyzeWithGemini(images: { data: string; mime: string }[]
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new UpstreamError('El servidor no tiene configurada la IA. Usa el modo demo mientras tanto.', 503);
 
+  deadline = Date.now() + TOTAL_BUDGET_MS;
   const failures: string[] = [];
   const fail = (why: string) => failures.push(why);
   const tried = new Set<string>();
@@ -236,6 +243,7 @@ export async function analyzeWithGemini(images: { data: string; mime: string }[]
   const attempt = async (models: string[]) => {
     for (const model of models) {
       if (tried.has(model)) continue;
+      if (deadline - Date.now() < MIN_CALL_MS) break; // sin tiempo para otro intento
       tried.add(model);
       const analysis = await tryModel(model, apiKey, images, fail);
       if (analysis) return { analysis, model };

@@ -12,16 +12,15 @@ Estado al 23 de noviembre de 2026 (versión 1.0.1, rama `cierre-final`).
 - **Update 1.0.1 publicado** en el canal `preview` (grupo `e66cb468` ("1.0.1 QA"), runtime `exposdk:54.0.0`). No cambió código nativo: el **APK `2c4fbdf2` sigue vigente** y los QR no cambian.
 - Documentación: [CLAUDE.md](CLAUDE.md), [docs/portafolio.md](docs/portafolio.md), [docs/demo-profesor.md](docs/demo-profesor.md), [docs/QA.md](docs/QA.md).
 
-## 1. Arreglar el análisis con Gemini (urgente, antes de presentar)
+## 1. Desplegar el endurecimiento del backend (recomendado)
 
-Supabase ya está restaurado y pasa todas sus pruebas. Lo que falla es `/api/analyze` en producción (502 en 2 s o 504 a los 46 s), así que un escaneo real termina en el error con "Usar modo demo".
+El análisis con Gemini funciona (24 nov: 200 en 8 a 29 s). La falla del 23 nov fue del lado de Google. Para que una caída parecida dé mejores mensajes y logs, despliega el código nuevo de `server/lib/gemini.ts`:
 
-1. En Vercel, proyecto `cazador-de-objetos-api` → **Logs**: busca `[gemini] todos los modelos fallaron:`.
-2. Si dice 404 o "not found": los nombres de modelo de `server/lib/gemini.ts` están retirados; cámbialos y redespliega.
-3. Si dice "API key": genera una llave nueva y cámbiala en las variables de entorno de Vercel.
-4. Comprueba con `node scripts/test-backend.mjs <carpeta-con-jpgs>`.
+```bash
+cd server && npx vercel --prod
+```
 
-Además: el mensaje del rate limit dice "espera un minuto" pero la espera real puede ser de hasta 10 minutos, y el APK del README ya no se puede descargar (hay que generar uno nuevo con `eas build -p android --profile preview`).
+Además: el mensaje del rate limit dice "espera un minuto" pero la espera puede ser de hasta 10 minutos, y el APK del README ya no se puede descargar (genera uno nuevo con `npx eas-cli@latest build -p android --profile preview`).
 
 ## 2. Probar en teléfonos reales
 

@@ -141,9 +141,21 @@ async function main() {
   } else {
     const health = await fetch(`${API}/api/health`).then((r) => r.json()).catch(() => null);
     ok(!!health, `/api/health responde ${health ? JSON.stringify(health) : ''}`);
-    const img = await fetch('https://upload.wikimedia.org/wikipedia/commons/4/45/A_small_cup_of_coffee.JPG', {
-      headers: { 'User-Agent': 'CazadorDeObjetos-tests/1.0' },
-    });
+    // Miniatura de 960 px: la app siempre reduce las fotos a ≤ 1024 px antes de enviarlas (el original pesa varios MB).
+    const IMG_URL = 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/A_small_cup_of_coffee.JPG/960px-A_small_cup_of_coffee.JPG';
+    let img;
+    if (process.env.TEST_IMAGE) {
+      // Foto local (JPEG ≤ 1024 px) para no depender de Wikimedia: TEST_IMAGE=ruta node scripts/test-supabase.mjs
+      const buf = readFileSync(process.env.TEST_IMAGE);
+      img = new Response(buf, { status: 200, headers: { 'content-type': 'image/jpeg' } });
+    }
+    // Wikimedia limita descargas seguidas (429): reintenta con espera.
+    for (let i = 0; !img && i < 4; i++) {
+      img = await fetch(IMG_URL, { headers: { 'User-Agent': 'CazadorDeObjetos-tests/1.0' } });
+      if (img.status !== 429) break;
+      img = i < 3 ? undefined : img;
+      await new Promise((r) => setTimeout(r, 5000 * (i + 1)));
+    }
     ok(img.ok && (img.headers.get('content-type') ?? '').startsWith('image/'), `imagen de ejemplo descargada (HTTP ${img.status})`);
     const b64 = Buffer.from(await img.arrayBuffer()).toString('base64');
     const t0 = Date.now();
