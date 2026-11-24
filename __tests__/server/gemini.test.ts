@@ -89,8 +89,14 @@ describe('analyzeWithGemini con respuestas malformadas', () => {
     await expect(analyzeWithGemini(imgs)).rejects.toBeInstanceOf(NotObjectError);
   });
 
-  it('429 de Gemini → mensaje de saturación (503)', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce(gem(429, 'quota'));
+  it('429 en un modelo → prueba el siguiente', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(gem(429, 'quota')).mockResolvedValueOnce(gem(200, { candidates: [] }));
+    await expect(analyzeWithGemini(imgs)).rejects.toBeDefined();
+    expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it('429 en todos los modelos → mensaje de saturación (503)', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(gem(429, 'quota'));
     await expect(analyzeWithGemini(imgs)).rejects.toMatchObject({ status: 503, message: expect.stringMatching(/saturada/) });
   });
 

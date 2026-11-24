@@ -196,7 +196,7 @@ async function tryModel(model: string, apiKey: string, images: { data: string; m
     fail(`${model}: ${(e as Error)?.name === 'AbortError' ? `sin respuesta a tiempo` : String((e as Error)?.message).slice(0, 80)}`);
     return null;
   }
-  if (res.status === 429) throw new UpstreamError('La IA está saturada en este momento. Intenta de nuevo en unos segundos.', 503);
+  // 429 = cuota de ESE modelo; otro modelo puede tener cuota libre: se sigue con el siguiente.
   if (!res.ok) {
     fail(`${model}: HTTP ${res.status} ${text.slice(0, 160)}`);
     // Un 4xx distinto de 404/modelo no mejora con otro modelo (p. ej. llave inválida): se sigue por si acaso, sin romper.
@@ -258,5 +258,8 @@ export async function analyzeWithGemini(images: { data: string; mime: string }[]
 
   // Los logs de Vercel muestran el motivo real de cada fallo (nunca incluye la llave).
   console.error('[gemini] todos los modelos fallaron:', failures.join(' | '));
+  if (failures.length && failures.every((f) => / HTTP (429|503) /.test(f))) {
+    throw new UpstreamError('La IA está saturada en este momento. Intenta de nuevo en unos segundos.', 503);
+  }
   throw new UpstreamError('No pudimos conectar con la IA. Intenta de nuevo en un momento.', 502);
 }
